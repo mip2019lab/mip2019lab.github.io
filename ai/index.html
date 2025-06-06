@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <title>“启思智辅”编程初学者智能助学智能体</title>
@@ -9,33 +10,39 @@
             background-color: #f9f9f9;
             padding: 30px;
         }
-
+ .line {
+            width: 800px; /* 线的长度 */
+            height: 0;
+            border-bottom: 2px solid #d6d5d5; /* 灰色线条，2px粗 */
+            
+        }
         h1 {
             color: #d32f2f;
         }
 
         .code-block {
             background-color: #2d2d2d;
-            color: #f8f8f2;
-            padding: 20px;
+            width: 800px;
+            color: #f8f8f2;           
             border-radius: 8px;
             position: relative;
             white-space: pre;
             font-family: monospace;
             font-size: 16px;
-            line-height: 1.5;
             overflow-x: auto;
         }
 
         .error-line {
             background-color: #4a0000;
-            display: block;
-            padding-left: 10px;
+            width: 800px;
+             display: block;
+            padding-left: 130px;
             border-left: 4px solid #e53935;
         }
 
         .explanation {
             margin-top: 20px;
+             width: 800px;
             background-color: #fff3cd;
             padding: 15px;
             border-left: 6px solid #ffb300;
@@ -43,8 +50,8 @@
         }
 
         .correct-code {
-            background-color: #e8f5e9;
-            padding: 15px;
+            background-color: #d4f3d7;
+            width: 830px;            
             border-left: 6px solid #43a047;
             margin-top: 20px;
             white-space: pre;
@@ -52,67 +59,88 @@
             font-size: 16px;
             border-radius: 6px;
         }
-          .divMap{
-            width: 100px;
-            height: 100px;
+
+        .divMap {
+            width: 1px;
+            height: 1px;
         }
-        
     </style>
 </head>
+
 <body>
-      <script>
+    <script>
         // 页面加载完成后，将标题的透明度设置为1
-        window.onload = function() {
+        window.onload = function () {
             document.querySelector("h1").style.opacity = 1;
         };
     </script>
 
-<h1  align="center" style="color: rgb(0, 82, 255); opacity: 0; transition: opacity 0.5s ease-in-out;transition-delay:10s;">曲阜师范大学-“启思智辅”：基于智能体的编程思维培养助学新模式</h1>
+    <h1 align="center"
+        style="color: rgb(0, 82, 255); opacity: 0; transition: opacity 0.5s ease-in-out;transition-delay:6s;">
+        曲阜师范大学-“启思智辅”：基于智能体的编程思维培养助学新模式</h1>
+
     <div align="center">
-        <video  width="800" height="600"  src="AIProgram.mp4" controls autoplay loop></video>
+        <p style="color: gray;font-size:13px;">曲阜师范大学计算机学院 2025-06-06 日照</p>
+        <video width="800" height="600" src="AIProgram.mp4" controls autoplay loop></video>
     </div>
-    
-<div style="font-size: 26px;">    
-简介：“启思智辅”是一款面向编程初学者的人工智能助学系统。该系统以插件形态深度集成于主流集成开发环境（IDE），旨在为高等教育阶段刚接触计算机编程的学生提供即时性、个性化的学习支持。系统运用先进的大语言模型技术，通过多轮启发式交互，辅助学生进行代码错误排查、逻辑梳理与算法理解。其核心目标在于，不仅解决学生在编程实践中遇到的具体问题，更着重于培养其计算思维、问题分析能力与自主学习习惯，从而有效提升编程基础教学的质量与学生的学习效能，为培养高素质创新型计算机人才奠定坚实基础。
-<br><br>
-示例：这段代码的功能是查找数组中的最大值，但原始代码存在错误。它初始化数组 `arr` 并假设第一个元素是最大值，通过 `sizeof` 计算数组大小。然而，在循环中，代码错误地每次都将当前元素赋值给 `max`，而未进行大小比较，导致逻辑错误。此外，循环中有多余的大括号。修正后的代码在循环中加入了 `if (arr[i] > max)` 判断，只有当当前元素大于 `max` 时才更新 `max`。最终，程序正确输出数组的最大值。
-</div>
-<h2  style="color: rgb(0, 82, 255);">❌ C语言代码错误标注：查找数组最大值</h2>
 
-<div class="code-block">
-#include <stdio.h><br><br>
-int main() {<br>
-    int arr[] = {3, 5, 2, 8, 1, 9};<br>
-    int max = arr[0]; // 假设第一个元素是最大的<br>
-    int size = sizeof(arr) / sizeof(arr[0]); // 计算数组的大小<br><br>
-    <span class="error-line">for (int i = 1; i < size; i++) {<br>        {<br>            max = arr[i]; // 更新最大值<br>        }<br>    }</span><br><br>
-    printf("最大值是: %d\\n", max);<br>
-    return 0;<br>
-}
-</div>
+    <div align="center">
+        <p align="left" style="font-size: 19px; width:800px;">
+            简介：“启思智辅”是一款面向编程初学者的人工智能助学系统。该系统以插件形态深度集成于主流集成开发环境（IDE），旨在为高等教育阶段刚接触计算机编程的学生提供即时性、个性化的学习支持。系统运用先进的大语言模型技术，通过多轮启发式交互，辅助学生进行代码错误排查、逻辑梳理与算法理解。其核心目标在于，不仅解决学生在编程实践中遇到的具体问题，更着重于培养其计算思维、问题分析能力与自主学习习惯，从而有效提升编程基础教学的质量与学生的学习效能，为培养高素质创新型计算机人才奠定坚实基础。
+            <br><br>
+            示例：这段代码的功能是查找数组中的最大值，但原始代码存在错误。它初始化数组 `arr` 并假设第一个元素是最大值，通过 `sizeof` 计算数组大小。然而，在循环中，代码错误地每次都将当前元素赋值给
+            `max`，而未进行大小比较，导致逻辑错误。此外，循环中有多余的大括号。修正后的代码在循环中加入了 `if (arr[i] > max)` 判断，只有当当前元素大于 `max` 时才更新
+            `max`。最终，程序正确输出数组的最大值。
+        </p>
 
-<div class="explanation">
-    <strong>🔍 错误说明：</strong><br>
-    - 在 for 循环中，缺少了判断语句 <code>if (arr[i] > max)</code>。<br>
-    - 当前代码每次循环都会无条件执行 <code>max = arr[i]</code>，最终导致 <code>max</code> 被赋值为数组最后一个元素（虽然结果可能碰巧正确，但逻辑错误）。<br>
-    - 多余的大括号 <code>{}</code> 可以删除。
-</div>
+        <h2 style="color: rgb(0, 82, 255);">❌ C语言代码错误标注：查找数组最大值</h2>
 
-<div class="correct-code">
-#include <stdio.h><br><br>
-int main() {<br>
-    int arr[] = {3, 5, 2, 8, 1, 9};<br>
-    int max = arr[0];<br>
-    int size = sizeof(arr) / sizeof(arr[0]);<br><br>
-    for (int i = 1; i < size; i++) {<br>
-        if (arr[i] > max) {<br>
-            max = arr[i]; // 只有当前元素更大时才更新<br>
-        }<br>
-    }<br><br>
-    printf("最大值是: %d\\n", max);<br>
-    return 0;<br><br>
-}
+        <div  class="code-block" >
+            <p align="left" >
+                #include <stdio.h><br><br>
+                int main() {<br>
+                int arr[] = {3, 5, 2, 8, 1, 9};<br>
+                int max = arr[0]; // 假设第一个元素是最大的<br>
+                int size = sizeof(arr) / sizeof(arr[0]); // 计算数组的大小<br><br>
+                <span class="error-line">for (int i = 1; i < size; i++) {<br> {<br> max = arr[i]; // 更新最大值<br> }<br>
+                        }</span><br><br>
+                printf("最大值是: %d\\n", max);<br>
+                return 0;<br>
+                }
+            </p>
+        </div>
+
+        <div align="left" class="explanation">
+            <strong>🔍 错误说明：</strong><br>
+            - 在 for 循环中，缺少了判断语句 <code>if (arr[i] > max)</code>。<br>
+            - 当前代码每次循环都会无条件执行 <code>max = arr[i]</code>，最终导致 <code>max</code> 被赋值为数组最后一个元素（虽然结果可能碰巧正确，但逻辑错误）。<br>
+            - 多余的大括号 <code>{}</code> 可以删除。
+        </div>
+
+        <div align="left" class="correct-code">
+            #include <stdio.h><br><br>
+                int main() {<br>
+                int arr[] = {3, 5, 2, 8, 1, 9};<br>
+                int max = arr[0];<br>
+                int size = sizeof(arr) / sizeof(arr[0]);<br><br>
+                for (int i = 1; i < size; i++) {<br>
+                    if (arr[i] > max) {<br>
+                    max = arr[i]; // 只有当前元素更大时才更新<br>
+                    }<br>
+                    }<br><br>
+                    printf("最大值是: %d\\n", max);<br>
+                    return 0;<br><br>
+                    }
+        </div>
+        <div class="divMap">
+            <script type="text/javascript" id="clstr_globe"
+                src="//clustrmaps.com/globe.js?d=c2NSlzITcK7A_NJ0kZTmD_XnPwf6tORbF_bbTvp7c0w"></script>
+        </div>
+
+    </div>
+ <div align="center">
+    <p class="line"><br>版权所有©曲阜师范大学</p>
 </div>
-   <div class="divMap" ><script type="text/javascript" id="clstr_globe" src="//clustrmaps.com/globe.js?d=c2NSlzITcK7A_NJ0kZTmD_XnPwf6tORbF_bbTvp7c0w"></script></div>
 </body>
+
 </html>
