@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传图片并调整尺寸</title>
+    <style>
+        /* 居中布局的样式 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            
+            align-items: center;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 可选：添加一些样式 */
+        #preview {
+            border: 1px solid #ccc;
+        }
+
+        #canvas {
+            display: none;
+        }
+        h1{
+            color: rgb(0, 82, 255); 
+        }
+    </style>
+</head>
+
+<body>
+    <div >
+        <h1>上传图片并调整尺寸</h1>
+        <input type="file" id="imageUpload" accept="image/*">
+        <br> <br> <button id="saveButton"
+            style="display: none; font-size:26px;background-color:rgb(247, 95, 141)">保存图片</button>
+        <br>
+        <img id="preview" src="" alt="图片预览" style="display: none;">
+        <canvas id="canvas"></canvas>
+        <br>
+
+    </div>
+
+
+    <script>
+        // 获取文件上传输入框、图片预览元素和画布元素
+        const uploadInput = document.getElementById('imageUpload');
+        const previewImg = document.getElementById('preview');
+        const canvas = document.getElementById('canvas');
+        const saveButton = document.getElementById('saveButton');
+
+        // 监听文件选择事件
+        uploadInput.addEventListener('change', function (event) {
+            const file = event.target.files[0]; // 获取用户选择的文件
+            if (file) {
+                const reader = new FileReader(); // 创建FileReader对象
+                reader.onload = function (e) {
+                    // 图片加载完成后，设置图片源并显示
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block'; // 显示图片
+                    saveButton.style.display = 'block'; // 显示保存按钮
+                    adjustImageSize(previewImg); // 调整图片尺寸
+                };
+                reader.readAsDataURL(file); // 读取文件内容为DataURL
+            }
+        });
+
+        // 调整图片尺寸的函数
+        function adjustImageSize(imgElement) {
+            // 等待图片加载完成
+            imgElement.onload = function () {
+                const maxWidth = 1300; // 最大宽度
+                const maxHeight = 1300; // 最大高度
+
+                // 获取图片的原始尺寸
+                const width = imgElement.naturalWidth;
+                const height = imgElement.naturalHeight;
+
+                // 判断是否需要调整尺寸
+                let newWidth = width;
+                let newHeight = height;
+
+                if (width > maxWidth || height > maxHeight) {
+                    if (width > height) { // 宽度大于高度
+                        if (width > maxWidth) {
+                            newWidth = maxWidth;
+                            newHeight = (height * maxWidth) / width;
+                        }
+                    } else { // 高度大于宽度
+                        if (height > maxHeight) {
+                            newHeight = maxHeight;
+                            newWidth = (width * maxHeight) / height;
+                        }
+                    }
+                }
+
+                // 设置图片的新尺寸
+                imgElement.style.width = `${newWidth}px`;
+                imgElement.style.height = `${newHeight}px`;
+            };
+        }
+
+        // 保存图片的函数
+        saveButton.addEventListener('click', function () {
+            // 将图片绘制到画布上
+            canvas.width = previewImg.width;
+            canvas.height = previewImg.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(previewImg, 0, 0, canvas.width, canvas.height);
+
+            // 将画布内容导出为图片
+             // 获取原始文件名
+              // 获取当前日期并格式化为 YYYYMMDD
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const formattedDate = `${month}${day}`;
+
+            const originalFileName = uploadInput.files[0].name;
+            const fileExtension = originalFileName.split('.').pop(); // 获取文件扩展名
+            const fileNameWithoutExtension = originalFileName.split('.')[0]; // 获取不包含扩展名的文件名
+            const newFileName = `${formattedDate}_${fileNameWithoutExtension}`; 
+
+            
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png'); // 将画布内容转换为Base64编码的图片
+            link.download = newFileName+'.png'; // 设置下载文件名
+            link.click(); // 触发下载
+        });
+    </script>
+</body>
+
+</html>
