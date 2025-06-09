@@ -12,7 +12,6 @@
             padding: 0;
             height: 100%;
             display: flex;
-            
             align-items: center;
             flex-direction: column;
             font-family: Arial, sans-serif;
@@ -33,19 +32,19 @@
 </head>
 
 <body>
-    <div >
-        <h1>上传图片自动调整尺寸</h1>
-        <p>上传大尺寸的图片，系统将会自动等比例调整尺寸（调整后变为1.6Mb左右的png格式图像）；<br> 调整后宽度或高度最大为1300个像素点，保持与原图像的比例不变。小尺寸图像不变。<br> <font style="color: gray;font: size 9px;">版权所有©曲阜师范大学 MIP实验室 2025.6.6.</font></p>
+    <div>
+        <h1>上传大尺寸图片自动调整尺寸</h1>
+        <p>上传大尺寸的图片，系统将会自动等比例调整尺寸（调整后变为 0.5 Mb（即：500kb）左右的.jpg格式图像）；<br> 调整后宽度或高度最大为1500个像素点，保持与原图像的比例不变。小尺寸图像不变。<br> <font style="color: gray;font: size 9px;">版权所有©曲阜师范大学 MIP实验室 2025.6.6.</font></p>
         <input type="file" id="imageUpload" accept="image/*">
-        <br> <br> <button id="saveButton"
-            style="display: none; font-size:26px;background-color:rgb(247, 95, 141)">保存图片</button>
+        <br> <p id="fileSizeInfo" style="font-size: 19px; color: #e96464;"></p>
+         <br> <button id="saveButton"
+            style="display: none; font-size:26px;background-color:rgb(247, 95, 141)">新图片另存为</button>
         <br>
         <img id="preview" src="" alt="图片预览" style="display: none;">
         <canvas id="canvas"></canvas>
         <br>
-
+       
     </div>
-
 
     <script>
         // 获取文件上传输入框、图片预览元素和画布元素
@@ -53,11 +52,15 @@
         const previewImg = document.getElementById('preview');
         const canvas = document.getElementById('canvas');
         const saveButton = document.getElementById('saveButton');
+        const fileSizeInfo = document.getElementById('fileSizeInfo'); // 获取用于显示文件大小的元素
 
         // 监听文件选择事件
         uploadInput.addEventListener('change', function (event) {
             const file = event.target.files[0]; // 获取用户选择的文件
             if (file) {
+                // 显示文件大小
+                fileSizeInfo.textContent = `原图像大小：${formatFileSize(file.size)}`;
+
                 const reader = new FileReader(); // 创建FileReader对象
                 reader.onload = function (e) {
                     // 图片加载完成后，设置图片源并显示
@@ -74,8 +77,8 @@
         function adjustImageSize(imgElement) {
             // 等待图片加载完成
             imgElement.onload = function () {
-                const maxWidth = 1300; // 最大宽度
-                const maxHeight = 1300; // 最大高度
+                const maxWidth = 1500; // 最大宽度
+                const maxHeight = 1500; // 最大高度
 
                 // 获取图片的原始尺寸
                 const width = imgElement.naturalWidth;
@@ -113,27 +116,35 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(previewImg, 0, 0, canvas.width, canvas.height);
 
-            // 将画布内容导出为图片
-             // 获取原始文件名
-              // 获取当前日期并格式化为 YYYYMMDD
+            // 获取原始文件名
+            // 获取当前日期并格式化为 YYYYMMDD
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
-            const formattedDate = `${month}${day}`;
+            const formattedDate = `${year}${month}${day}`;
 
             const originalFileName = uploadInput.files[0].name;
             const fileExtension = originalFileName.split('.').pop(); // 获取文件扩展名
             const fileNameWithoutExtension = originalFileName.split('.')[0]; // 获取不包含扩展名的文件名
             const newFileName = `${formattedDate}_${fileNameWithoutExtension}`; 
 
-            
-
             const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png'); // 将画布内容转换为Base64编码的图片
-            link.download = newFileName+'.png'; // 设置下载文件名
+            link.href = canvas.toDataURL('image/jpeg',0.9); // 将画布内容转换为Base64编码的图片
+            link.download = newFileName+'.jpg'; // 设置下载文件名
             link.click(); // 触发下载
         });
+
+        // 格式化文件大小为易读格式
+        function formatFileSize(bytes) {
+            if (bytes < 1024) {
+                return `${bytes} 字节`;
+            } else if (bytes < 1024 * 1024) {
+                return `${(bytes / 1024).toFixed(2)} KB`;
+            } else {
+                return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+            }
+        }
     </script>
 </body>
 
