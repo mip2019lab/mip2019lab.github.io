@@ -7,7 +7,8 @@
     <title>上传图片自动调整尺寸</title>
     <style>
         /* 居中布局的样式 */
-        body, html {
+        body,
+        html {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -25,26 +26,47 @@
         #canvas {
             display: none;
         }
-        h1{
-            color: rgb(0, 82, 255); 
+
+        h1 {
+            color: rgb(0, 82, 255);
+        }
+
+        footer {
+            color: black;
+            text-align: center;
+            padding: 1rem;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+
         }
     </style>
 </head>
 
 <body>
     <div>
-        <h1>上传大尺寸图片自动调整文件大小</h1><a href="https://clustrmaps.com/site/1c6m3" title="ClustrMaps"><img src="//www.clustrmaps.com/map_v2.png?d=bylGgU0_K0UONPOal1y80wFeRkFVuJJTyl3hRIsIf9o&cl=ffffff"></a>
-        <p>上传大尺寸的图片，系统将会自动等比例调整尺寸（调整后变为 0.5 Mb（即：500kb）左右的.jpg格式图像）；<br> 调整后宽度或高度最大为1500个像素点，保持与原图像的比例不变。小尺寸图像不变。<br> <font style="color: gray;font: size 9px;">版权所有©曲阜师范大学 MIP实验室 2025.6.6.</font></p>
-        <input type="file" id="imageUpload" accept="image/*">
-        <br> <p id="fileSizeInfo" style="font-size: 19px; color: #7e2626;"></p>
-         <br> <button id="saveButton"
-            style="display: none; font-size:26px;background-color:orange">新图片另存为</button>
+        <h1>上传大尺寸图片自动调整文件大小</h1>
+        <p>上传大尺寸的图片，系统将会自动等比例调整尺寸（调整后变为 0.5 Mb（即：500kb）左右的.jpg格式图像）；<br> 调整后宽度或高度最大为1500个像素点，保持与原图像的比例不变。小尺寸图像不变。<br>
+            <font style="color: gray;font: size 9px;">版权所有©曲阜师范大学 MIP实验室 2025.6.6.</font>
+        </p>
+        <input type="file" id="imageUpload" accept="image/*" style="color: rgb(53, 24, 214);">
+        <br>
+        <p id="fileSizeInfo" style="font-size: 19px; color: #7e2626;"></p>
+        <br> <button id="saveButton" style="display: none; font-size:26px;background-color:orange">新图片另存为</button>
         <br>
         <img id="preview" src="" alt="图片预览" style="display: none;">
         <canvas id="canvas"></canvas>
         <br>
-       
+
     </div>
+    <footer>
+        <p>&copy; 2025 My Website. All rights reserved.</p>
+        <p> <a href="https://clustrmaps.com/site/1c6m3" title="ClustrMaps"><img
+                    src="//www.clustrmaps.com/map_v2.png?d=bylGgU0_K0UONPOal1y80wFeRkFVuJJTyl3hRIsIf9o&cl=ffffff"></a>
+        </p>
+    </footer>
+
+
 
     <script>
         // 获取文件上传输入框、图片预览元素和画布元素
@@ -127,11 +149,11 @@
             const originalFileName = uploadInput.files[0].name;
             const fileExtension = originalFileName.split('.').pop(); // 获取文件扩展名
             const fileNameWithoutExtension = originalFileName.split('.')[0]; // 获取不包含扩展名的文件名
-            const newFileName = `${formattedDate}_${fileNameWithoutExtension}`; 
+            const newFileName = `${formattedDate}_${fileNameWithoutExtension}`;
 
             const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/jpeg',0.9); // 将画布内容转换为Base64编码的图片
-            link.download = newFileName+'.jpg'; // 设置下载文件名
+            link.href = canvas.toDataURL('image/jpeg', 0.9); // 将画布内容转换为Base64编码的图片
+            link.download = newFileName + '.jpg'; // 设置下载文件名
             link.click(); // 触发下载
         });
 
