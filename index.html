@@ -58,6 +58,21 @@
         .c3922 {
             display: none;
         }
+          /* 设置初始样式 */
+        .image-container {            
+            overflow: hidden; /* 防止图片溢出容器 */
+            width: 112px; /* 初始宽度 */
+            height: 134px; /* 初始高度 */  
+        }
+        /* 图片样式 */
+        .image-container img {
+            width: 100%; /* 图片宽度占满容器 */
+            height: auto; /* 图片高度自动调整 */
+            transition: all 0.5s ease; /* 平滑过渡效果 */
+        }
+        .image-container:hover img {
+            transform: scale(1.3); /* 放大图片 */
+        }
     </style>
 </head>
 
@@ -529,7 +544,7 @@
 
                         <div class="col-sm-4 sm-margin-b-50">
                             <div class="margin-b-20">
-                                <div data-wow-duration=".3" data-wow-delay=".1s" class="wow zoomIn">
+                                <div class="image-container" data-wow-duration=".3" data-wow-delay=".1s" class="wow zoomIn">
                                     <a href="https://kyanbis.github.io" target="_blank">
                                         <img src="img/lisien.jpg" alt="Latest Products Image" class="img-responsive"
                                             width="112" height="134" />
