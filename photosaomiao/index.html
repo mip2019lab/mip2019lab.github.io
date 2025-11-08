@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像二值化（达到扫描效果）</title>
+    <style>
+        
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-section, .image-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #imageUpload {
+            margin-top: 10px;
+        }
+        #originalCanvas, #processedCanvas {
+            max-width: 100%;
+            max-height: 400px; /* 限制画布最大高度 */
+            display: none; /* 初始隐藏 */
+            border: 1px solid #ddd;
+            margin: 10px 0;
+        }
+        .slider-container {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="range"] {
+            width: 100%;
+            max-width: 300px;
+        }
+        #thresholdValue {
+            font-size: 1em;
+            color: #666;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .note {
+            font-size: 0.9em;
+            color: #777;
+            margin-top: 10px;
+            font-style: italic;
+        }
+    
+/* 新增：横向排列容器 */
+.row {
+    display: flex;
+    justify-content: center;   /* 居中 */
+    gap: 20px;                 /* 两图间距 */
+    margin-top: 20px;
+}
+.row .image-section {
+    flex: 1;                   /* 各占 50% */
+    text-align: center;
+}
+/* 让画布自适应宽度，高度自动 */
+.row canvas {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border: 1px solid #ddd;
+}
+ 
+    </style>
+</head>
+<body>
+
+   <body>
+
+<div class="container">
+    <h1>图像二值化工具（达到扫描效果）</h1>
+
+    <div class="upload-section">
+        <label for="imageUpload">选择一张图片进行处理:</label>
+        <input type="file" id="imageUpload" accept="image/*">
+    </div>
+
+    <div class="slider-container">
+        <label for="thresholdSlider">设置白色阈值 (RGB平均值): <span id="thresholdValue">220</span></label>
+        <input type="range" id="thresholdSlider" min="0" max="255" value="220">
+    </div>
+
+    <button id="processBtn" disabled>执行二值化</button>
+    <button id="downloadBtn" disabled>下载处理后图片</button>
+
+    <!-- 横向排列 -->
+    <div class="row">
+        <div class="image-section">
+            <h3>原始图片</h3>
+            <canvas id="originalCanvas"></canvas>
+        </div>
+        <div class="image-section">
+            <h3>处理后图片</h3>
+            <canvas id="processedCanvas"></canvas>
+        </div>
+    </div>
+
+    <p class="note">提示：调整滑块可以改变将背景变为白色的“接近白色”的标准。值越高，表示颜色需要越接近纯白才会被变为白色。</p>
+</div>
+
+<script>
+/* 以下脚本完全沿用你原来的 JS，无需任何改动 */
+const imageUpload = document.getElementById('imageUpload');
+const processBtn = document.getElementById('processBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const originalCanvas = document.getElementById('originalCanvas');
+const processedCanvas = document.getElementById('processedCanvas');
+const originalCtx = originalCanvas.getContext('2d');
+const processedCtx = processedCanvas.getContext('2d');
+const thresholdSlider = document.getElementById('thresholdSlider');
+const thresholdValue = document.getElementById('thresholdValue');
+
+let currentImage = null;
+
+imageUpload.addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file || !file.type.match('image.*')) {
+        alert('请选择一个有效的图片文件！');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        currentImage = new Image();
+        currentImage.onload = function () {
+            originalCanvas.width = currentImage.width;
+            originalCanvas.height = currentImage.height;
+            originalCtx.drawImage(currentImage, 0, 0);
+            originalCanvas.style.display = 'block';
+            processBtn.disabled = false;
+            downloadBtn.disabled = true;
+        };
+        currentImage.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+thresholdSlider.addEventListener('input', function () {
+    thresholdValue.textContent = this.value;
+});
+
+processBtn.addEventListener('click', function () {
+    if (!currentImage) {
+        alert('请先上传一张图片！');
+        return;
+    }
+    processedCanvas.width = originalCanvas.width;
+    processedCanvas.height = originalCanvas.height;
+    const imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
+    const data = imageData.data;
+    const threshold = parseInt(thresholdSlider.value);
+    for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (avg > threshold) {
+            data[i] = data[i + 1] = data[i + 2] = 255;
+        }
+    }
+    processedCtx.putImageData(imageData, 0, 0);
+    processedCanvas.style.display = 'block';
+    downloadBtn.disabled = false;
+});
+
+downloadBtn.addEventListener('click', function () {
+    if (processedCanvas.width === 0 || processedCanvas.height === 0) {
+        alert('没有可下载的处理后图片！');
+        return;
+    }
+    const link = document.createElement('a');
+    link.download = '二值化结果.png';
+    link.href = processedCanvas.toDataURL('image/png');
+    link.click();
+});
+</script>
+
+</body>
+</html>
