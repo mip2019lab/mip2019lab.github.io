@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>图像二值化（达到扫描效果）</title>
+    <title>图像二值化（背景变白达到扫描效果）</title>
     <style>
         
         body {
@@ -184,10 +184,25 @@ processBtn.addEventListener('click', function () {
     const imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
     const data = imageData.data;
     const threshold = parseInt(thresholdSlider.value);
-    for (let i = 0; i < data.length; i += 4) {
+   /* for (let i = 0; i < data.length; i += 4) {
         const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
         if (avg > threshold) {
             data[i] = data[i + 1] = data[i + 2] = 255;
+        }
+    }
+    */
+     /*将大于给定阈值的颜色二值化为白色，且保留红色*/
+    for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (avg > threshold && data[i]<200) {
+            data[i] = data[i + 1] = data[i + 2] = 255;  
+        }
+    }
+    /* 黑色字体变成纯黑色 */
+    for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (avg < 44) {
+            data[i] = data[i + 1] = data[i + 2] = 0;
         }
     }
     processedCtx.putImageData(imageData, 0, 0);
