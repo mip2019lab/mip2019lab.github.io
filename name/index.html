@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>课堂随机点名器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            border-radius: 32px;
+            padding: 40px 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #667eea;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .display-area {
+            background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
+            border-radius: 24px;
+            padding: 40px 20px;
+            margin: 20px 0;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selected-name {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            word-break: break-word;
+            animation: pop 0.3s ease-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .placeholder {
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 60px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 8px;
+            box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 4px 12px rgba(240,147,251,0.3);
+        }
+
+        .input-group {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        input {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 60px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #667eea;
+        }
+
+        .student-list {
+            background: #f8f9ff;
+            border-radius: 20px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .student-list h3 {
+            font-size: 0.85rem;
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .student-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .student-tag {
+            background: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: #333;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0 4px;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        .delete-btn:hover {
+            transform: scale(1.1);
+            background: none;
+        }
+
+        .count-badge {
+            background: #667eea;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>
+            📋 随机点名器
+        </h1>
+        <div class="subtitle">点击按钮随机抽取幸运同学</div>
+
+        <div class="display-area">
+            <div id="selectedName" class="placeholder">🎲 等待点名</div>
+        </div>
+
+        <button id="pickBtn">🎲 随机点名</button>
+        <button id="resetDefaultBtn" class="btn-secondary">🔄 重置默认名单</button>
+
+        <div class="input-group">
+            <input type="text" id="studentNameInput" placeholder="输入学生姓名" maxlength="20">
+            <button id="addBtn" class="btn-secondary">➕ 添加学生</button>
+        </div>
+
+        <div class="student-list">
+            <h3>
+                <span>📝 班级名单</span>
+                <span class="count-badge" id="studentCount">0人</span>
+            </h3>
+            <div id="studentTags" class="student-tags">
+                <!-- 动态显示学生标签 -->
+            </div>
+        </div>
+    </div>
+    <footer>
+        💡 点击学生标签旁的 ✕ 可删除 | 随机点名支持所有在册学生
+    </footer>
+</div>
+
+<script>
+    // 默认学生名单
+    let students = ['张三', '李四', '王小明', '赵思琪', '陈小美', '刘子轩', '林书瑶'];
+    
+    // DOM 元素
+    const selectedNameDiv = document.getElementById('selectedName');
+    const pickBtn = document.getElementById('pickBtn');
+    const resetDefaultBtn = document.getElementById('resetDefaultBtn');
+    const studentNameInput = document.getElementById('studentNameInput');
+    const addBtn = document.getElementById('addBtn');
+    const studentTagsDiv = document.getElementById('studentTags');
+    const studentCountSpan = document.getElementById('studentCount');
+    
+    // 保存原始默认名单（用于重置）
+    const defaultStudents = [...students];
+    
+    // 更新学生列表显示
+    function updateStudentList() {
+        // 清空容器
+        studentTagsDiv.innerHTML = '';
+        
+        if (students.length === 0) {
+            studentTagsDiv.innerHTML = '<div style="color: #aaa; text-align: center; width: 100%;">暂无学生，请添加</div>';
+            studentCountSpan.textContent = '0人';
+            return;
+        }
+        
+        // 遍历显示每个学生
+        students.forEach((student, index) => {
+            const tag = document.createElement('div');
+            tag.className = 'student-tag';
+            tag.innerHTML = `
+                ${student}
+                <button class="delete-btn" data-index="${index}" title="删除">✕</button>
+            `;
+            studentTagsDiv.appendChild(tag);
+        });
+        
+        studentCountSpan.textContent = `${students.length}人`;
+        
+        // 绑定删除按钮事件
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const index = parseInt(btn.getAttribute('data-index'));
+                deleteStudent(index);
+            });
+        });
+    }
+    
+    // 删除学生
+    function deleteStudent(index) {
+        if (index >= 0 && index < students.length) {
+            const removed = students[index];
+            students.splice(index, 1);
+            updateStudentList();
+            // 如果删除后没有学生了，清空显示区域
+            if (students.length === 0) {
+                selectedNameDiv.innerHTML = '😢 名单空了，请添加学生';
+                selectedNameDiv.className = 'placeholder';
+            } else {
+                selectedNameDiv.innerHTML = '🎲 等待点名';
+                selectedNameDiv.className = 'placeholder';
+            }
+        }
+    }
+    
+    // 添加学生
+    function addStudent() {
+        const name = studentNameInput.value.trim();
+        if (name === '') {
+            alert('请输入学生姓名');
+            return;
+        }
+        
+        if (students.includes(name)) {
+            alert('该学生已在名单中');
+            return;
+        }
+        
+        students.push(name);
+        updateStudentList();
+        studentNameInput.value = '';
+        studentNameInput.focus();
+        
+        // 动画提示
+        const addBtnEl = addBtn;
+        addBtnEl.style.transform = 'scale(0.95)';
+        setTimeout(() => addBtnEl.style.transform = '', 150);
+    }
+    
+    // 随机点名
+    function pickRandomStudent() {
+        if (students.length === 0) {
+            selectedNameDiv.innerHTML = '⚠️ 没有学生，请先添加！';
+            selectedNameDiv.className = 'placeholder';
+            // 震动效果提示
+            selectedNameDiv.style.animation = 'none';
+            setTimeout(() => selectedNameDiv.style.animation = 'pop 0.3s ease-out', 10);
+            return;
+        }
+        
+        const randomIndex = Math.floor(Math.random() * students.length);
+        const selected = students[randomIndex];
+        
+        // 显示点名结果并添加动画
+        selectedNameDiv.innerHTML = `🎉 ${selected} 同学！ 🎉`;
+        selectedNameDiv.className = 'selected-name';
+        
+        // 添加额外的小动画：被点到的学生标签高亮闪烁
+        const tags = document.querySelectorAll('.student-tag');
+        if (tags[randomIndex]) {
+            tags[randomIndex].style.backgroundColor = '#e8f0fe';
+            tags[randomIndex].style.transition = '0.2s';
+            setTimeout(() => {
+                tags[randomIndex].style.backgroundColor = '';
+            }, 500);
+        }
+    }
+    
+    // 重置为默认名单
+    function resetToDefault() {
+        students = [...defaultStudents];
+        updateStudentList();
+        selectedNameDiv.innerHTML = '🎲 等待点名';
+        selectedNameDiv.className = 'placeholder';
+        
+        // 闪烁提示重置完成
+        const resetBtn = resetDefaultBtn;
+        resetBtn.style.transform = 'scale(0.95)';
+        setTimeout(() => resetBtn.style.transform = '', 150);
+    }
+    
+    // 绑定事件
+    pickBtn.addEventListener('click', pickRandomStudent);
+    addBtn.addEventListener('click', addStudent);
+    resetDefaultBtn.addEventListener('click', resetToDefault);
+    
+    // 回车键添加学生
+    studentNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            addStudent();
+        }
+    });
+    
+    // 键盘快捷键：按空格键点名（防止页面滚动）
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && document.activeElement !== studentNameInput) {
+            e.preventDefault();
+            pickRandomStudent();
+        }
+    });
+    
+    // 初始化显示
+    updateStudentList();
+</script>
+</body>
+</html>
