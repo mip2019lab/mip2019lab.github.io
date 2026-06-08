@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>图像二值化工具 - 在线图片黑白处理</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none; /* 避免拖动时选中文字，提升体验 */
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #f5f7fc 0%, #e9eef4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .card {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.05);
+            overflow: hidden;
+            padding: 24px 28px 32px 28px;
+            transition: all 0.2s;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e2a3a, #0f3b2c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin: 0 0 0.25rem 0;
+            letter-spacing: -0.3px;
+        }
+        .sub {
+            color: #4a627a;
+            border-left: 4px solid #2c7a4d;
+            padding-left: 14px;
+            margin-bottom: 28px;
+            font-weight: 450;
+        }
+        .workspace {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+        .panel {
+            flex: 1;
+            min-width: 280px;
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            border-radius: 1.5rem;
+            padding: 20px 18px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .panel h2 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 0;
+            margin-bottom: 18px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #dce5f0;
+        }
+        .canvas-container {
+            background: #f0f2f5;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 1px 4px #0001, 0 1px 2px white;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 16px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+            background: #fff;
+            display: block;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+        .info-area {
+            background: #eef2f8;
+            border-radius: 1.2rem;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            color: #1f3b4c;
+            text-align: center;
+            margin: 12px 0;
+            word-break: break-all;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        button {
+            background: #1e2f3e;
+            border: none;
+            color: white;
+            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button.primary {
+            background: #2c7a4d;
+            box-shadow: 0 4px 8px rgba(44,122,77,0.3);
+        }
+        button.primary:hover {
+            background: #1e5a39;
+            transform: scale(0.97);
+        }
+        button.outline {
+            background: transparent;
+            border: 1.5px solid #2c7a4d;
+            color: #2c7a4d;
+            box-shadow: none;
+        }
+        button.outline:hover {
+            background: #eafaf1;
+        }
+        button.danger {
+            background: #7a4c2c;
+        }
+        button:hover {
+            filter: brightness(0.96);
+            transform: translateY(-1px);
+        }
+        .threshold-bar {
+            margin: 20px 0 8px;
+        }
+        label {
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        input[type="range"] {
+            flex: 2;
+            min-width: 140px;
+            height: 5px;
+            border-radius: 10px;
+            background: #cbd5e1;
+        }
+        .val-display {
+            background: #2c3e44;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 60px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .file-label {
+            background: #eef2ff;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #b9c8e8;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.1s;
+        }
+        .file-label:hover {
+            background: #e0e8fc;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        hr {
+            margin: 16px 0;
+            border: none;
+            border-top: 1px solid #cfdfed;
+        }
+        .status {
+            font-size: 0.8rem;
+            color: #2c6b3f;
+            background: #e0f2e9;
+            border-radius: 40px;
+            padding: 4px 12px;
+            text-align: center;
+        }
+        @media (max-width: 780px) {
+            .card { padding: 18px; }
+            .panel { padding: 14px; }
+            button { padding: 6px 16px; }
+        }
+        footer {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #6f8eac;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>🎨 图像二值化 · 黑白转换</h1>
+    <div class="sub">将彩色/灰度图片转为纯黑白 (Binary) — 动态阈值调节</div>
+
+    <div class="workspace">
+        <!-- 左侧：原图区域 -->
+        <div class="panel">
+            <h2>📸 原始图像</h2>
+            <div class="canvas-container">
+                <canvas id="originalCanvas" width="500" height="400" style="width:100%; height:auto; max-width:500px; aspect-ratio:500/400"></canvas>
+            </div>
+            <div class="controls">
+                <label class="file-label">
+                    📁 上传图片
+                    <input type="file" id="uploadInput" accept="image/jpeg, image/png, image/webp, image/bmp">
+                </label>
+                <button id="resetOriginalBtn" class="outline">🔄 重置</button>
+            </div>
+            <div class="info-area" id="originalInfo">
+                💡 点击上传图片或拖拽到此处 (支持 JPG/PNG)
+            </div>
+        </div>
+
+        <!-- 右侧：二值化结果区域 -->
+        <div class="panel">
+            <h2>⚫ 二值化结果 (黑白)</h2>
+            <div class="canvas-container">
+                <canvas id="binaryCanvas" width="500" height="400" style="width:100%; height:auto; max-width:500px; aspect-ratio:500/400"></canvas>
+            </div>
+            <div class="threshold-bar">
+                <label>
+                    <span>🎚️ 二值化阈值 (0 ~ 255) &nbsp;&nbsp;</span>
+                    <input type="range" id="thresholdSlider" min="0" max="255" value="128" step="1">
+                    <span class="val-display" id="thresholdValue">128</span>
+                </label>
+            </div>
+            <div class="controls">
+                <button id="applyBinaryBtn" class="primary">✨ 应用当前阈值</button>
+                <button id="downloadBinaryBtn" class="outline">💾 下载二值图</button>
+                <button id="invertBinaryBtn" class="outline">🔄 反色 (黑白颠倒)</button>
+            </div>
+            <div class="status" id="binaryStatus">
+                ⚙️ 调节阈值后点击 [应用当前阈值]
+            </div>
+        </div>
+    </div>
+    <footer>
+        💡 二值化原理：将每个像素的灰度值与阈值比较，≥阈值设为白(255)，＜阈值设为黑(0)。<br>
+        推荐先用灰度算法 (亮度感知) 保证最佳效果。
+    </footer>
+</div>
+
+<script>
+    (function(){
+        // ----- DOM 元素 -----
+        const originalCanvas = document.getElementById('originalCanvas');
+        const binaryCanvas = document.getElementById('binaryCanvas');
+        const ctxOrig = originalCanvas.getContext('2d');
+        const ctxBinary = binaryCanvas.getContext('2d');
+        
+        const uploadInput = document.getElementById('uploadInput');
+        const resetBtn = document.getElementById('resetOriginalBtn');
+        const thresholdSlider = document.getElementById('thresholdSlider');
+        const thresholdValueSpan = document.getElementById('thresholdValue');
+        const applyBtn = document.getElementById('applyBinaryBtn');
+        const downloadBtn = document.getElementById('downloadBinaryBtn');
+        const invertBtn = document.getElementById('invertBinaryBtn');
+        const originalInfo = document.getElementById('originalInfo');
+        const binaryStatus = document.getElementById('binaryStatus');
+        
+        // 存储原始图像数据 (ImageData 格式)
+        let originalImageData = null;      // RGBA 原始图像数据
+        let currentBinaryImageData = null; // 当前的二值化结果 (ImageData)
+        let imageLoaded = false;            // 标志是否已经加载有效图片
+        
+        // 默认示例：生成渐变/网格图以便演示 (默认一个好看的测试图案)
+        function drawDefaultPattern() {
+            const w = 500, h = 400;
+            originalCanvas.width = w;
+            originalCanvas.height = h;
+            binaryCanvas.width = w;
+            binaryCanvas.height = h;
+            
+            // 绘制一个彩色示例图 (渐变色+几何图形)
+            ctxOrig.clearRect(0, 0, w, h);
+            // 背景渐变
+            const grad = ctxOrig.createLinearGradient(0, 0, w, h);
+            grad.addColorStop(0, '#ff9a9e');
+            grad.addColorStop(0.5, '#fad0c4');
+            grad.addColorStop(1, '#fad0c4');
+            ctxOrig.fillStyle = grad;
+            ctxOrig.fillRect(0, 0, w, h);
+            // 绘制一些几何体
+            ctxOrig.fillStyle = '#3b82f6';
+            ctxOrig.beginPath();
+            ctxOrig.arc(120, 120, 55, 0, Math.PI*2);
+            ctxOrig.fill();
+            ctxOrig.fillStyle = '#f97316';
+            ctxOrig.fillRect(320, 240, 100, 100);
+            ctxOrig.fillStyle = '#10b981';
+            ctxOrig.beginPath();
+            ctxOrig.moveTo(400, 80);
+            ctxOrig.lineTo(450, 180);
+            ctxOrig.lineTo(350, 180);
+            ctxOrig.fill();
+            ctxOrig.fillStyle = '#8b5cf6';
+            ctxOrig.font = 'bold 28px system-ui';
+            ctxOrig.fillText("Demo", 40, 320);
+            // 增加噪点 / 细节
+            for(let i=0;i<300;i++){
+                ctxOrig.fillStyle = `rgba(0,0,0,${Math.random()*0.5})`;
+                ctxOrig.fillRect(Math.random()*w, Math.random()*h, 2,2);
+            }
+            
+            // 提取 ImageData 保存
+            originalImageData = ctxOrig.getImageData(0, 0, w, h);
+            // 同时将原始数据二值化默认阈值
+            updateBinaryWithThreshold(128);
+            imageLoaded = true;
+            originalInfo.innerHTML = '✅ 当前示例图像 (彩色Demo) — 可上传自己的图片';
+            binaryStatus.innerHTML = '✅ 已生成二值化预览 (阈值128)';
+        }
+        
+        // 灰度转换函数 (根据人眼感知亮度: 0.299R + 0.587G + 0.114B)
+        function getGrayScale(r, g, b) {
+            return Math.floor(0.299 * r + 0.587 * g + 0.114 * b);
+        }
+        
+        // 核心：根据给定的阈值，将原始图像二值化，并返回新的ImageData
+        function computeBinaryImageData(threshold) {
+            if (!originalImageData) return null;
+            const width = originalImageData.width;
+            const height = originalImageData.height;
+            const srcData = originalImageData.data;   // Uint8ClampedArray RGBA
+            // 创建新的 ImageData
+            const binaryData = new ImageData(width, height);
+            const dstData = binaryData.data;
+            
+            for (let i = 0; i < srcData.length; i += 4) {
+                const r = srcData[i];
+                const g = srcData[i+1];
+                const b = srcData[i+2];
+                const gray = getGrayScale(r, g, b);
+                // 二值化判断
+                if (gray >= threshold) {
+                    // 白色
+                    dstData[i] = 255;     // R
+                    dstData[i+1] = 255;   // G
+                    dstData[i+2] = 255;   // B
+                    dstData[i+3] = 255;   // A (完全不透明)
+                } else {
+                    // 黑色
+                    dstData[i] = 0;
+                    dstData[i+1] = 0;
+                    dstData[i+2] = 0;
+                    dstData[i+3] = 255;
+                }
+            }
+            return binaryData;
+        }
+        
+        // 将当前的二值化结果渲染到canvas并存储
+        function renderBinaryWithThreshold(threshold) {
+            if (!originalImageData) {
+                // 没有原图时显示提示
+                ctxBinary.clearRect(0, 0, binaryCanvas.width, binaryCanvas.height);
+                ctxBinary.fillStyle = "#eef2f8";
+                ctxBinary.fillRect(0, 0, binaryCanvas.width, binaryCanvas.height);
+                ctxBinary.fillStyle = "#6b7280";
+                ctxBinary.font = "14px system-ui";
+                ctxBinary.fillText("等待上传图片", 30, 50);
+                currentBinaryImageData = null;
+                return false;
+            }
+            const newBinary = computeBinaryImageData(threshold);
+            if (newBinary) {
+                ctxBinary.putImageData(newBinary, 0, 0);
+                currentBinaryImageData = newBinary;
+                binaryStatus.innerHTML = `✅ 二值化完成 (阈值=${threshold})   |   黑白图像已生成`;
+                return true;
+            }
+            return false;
+        }
+        
+        // 从当前保存的原始图像数据，更新二值化效果 (根据滑块阈值)
+        function updateBinaryWithThreshold(threshold) {
+            if (!originalImageData) return;
+            renderBinaryWithThreshold(threshold);
+        }
+        
+        // 反色功能 : 对当前的二值化图像进行黑白互换 (0<->255)
+        function invertBinary() {
+            if (!currentBinaryImageData) {
+                if (originalImageData) {
+                    // 如果没有生成过二值结果，先用当前阈值生成一次再反色
+                    const thresh = parseInt(thresholdSlider.value, 10);
+                    const freshBinary = computeBinaryImageData(thresh);
+                    if (freshBinary) {
+                        invertImageData(freshBinary);
+                        ctxBinary.putImageData(freshBinary, 0, 0);
+                        currentBinaryImageData = freshBinary;
+                        binaryStatus.innerHTML = `🔄 已反色 (阈值基于${thresh})，再次反色可恢复`;
+                    } else {
+                        alert("无有效图像数据");
+                    }
+                } else {
+                    alert("请先上传图片或使用默认示例");
+                }
+                return;
+            }
+            // 对 currentBinaryImageData 进行反色
+            const inverted = invertImageDataClone(currentBinaryImageData);
+            if (inverted) {
+                ctxBinary.putImageData(inverted, 0, 0);
+                currentBinaryImageData = inverted;
+                binaryStatus.innerHTML = `🔄 黑白反色已应用，可继续调节阈值重新生成`;
+            }
+        }
+        
+        // 原地反色修改 (直接操作)
+        function invertImageData(imageData) {
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                // 因为二值图中每个像素要么全白(255)要么全黑(0)，直接反转RGB即可
+                data[i] = 255 - data[i];       // R
+                data[i+1] = 255 - data[i+1];   // G
+                data[i+2] = 255 - data[i+2];   // B
+                // Alpha 不变
+            }
+            return imageData;
+        }
+        
+        function invertImageDataClone(srcImageData) {
+            const clone = new ImageData(srcImageData.width, srcImageData.height);
+            const srcData = srcImageData.data;
+            const dstData = clone.data;
+            for (let i = 0; i < srcData.length; i += 4) {
+                dstData[i] = 255 - srcData[i];
+                dstData[i+1] = 255 - srcData[i+1];
+                dstData[i+2] = 255 - srcData[i+2];
+                dstData[i+3] = srcData[i+3];
+            }
+            return clone;
+        }
+        
+        // 从上传文件加载图片
+        function loadImageFromFile(file) {
+            if (!file || !file.type.match('image.*')) {
+                alert("请上传有效的图片文件 (jpg/png/webp等)");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // 设置画布尺寸与原图比例保持一致，自适应显示（设定最大宽高限制，但保留像素完整）
+                    const maxWidth = 500;
+                    const maxHeight = 400;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) {
+                        height = (height * maxWidth) / width;
+                        width = maxWidth;
+                    }
+                    if (height > maxHeight) {
+                        width = (width * maxHeight) / height;
+                        height = maxHeight;
+                    }
+                    width = Math.floor(width);
+                    height = Math.floor(height);
+                    originalCanvas.width = width;
+                    originalCanvas.height = height;
+                    binaryCanvas.width = width;
+                    binaryCanvas.height = height;
+                    
+                    ctxOrig.clearRect(0, 0, width, height);
+                    ctxOrig.drawImage(img, 0, 0, width, height);
+                    // 存储原始图像数据
+                    originalImageData = ctxOrig.getImageData(0, 0, width, height);
+                    // 重置阈值滑块保持128，刷新二值化
+                    const thresholdVal = parseInt(thresholdSlider.value, 10);
+                    renderBinaryWithThreshold(thresholdVal);
+                    imageLoaded = true;
+                    originalInfo.innerHTML = `📷 已加载: ${file.name} (${width}×${height})`;
+                    binaryStatus.innerHTML = `✨ 新图片已加载，阈值 ${thresholdVal}`;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 重置到默认演示图案
+        function resetToDefault() {
+            const w = 500, h = 400;
+            originalCanvas.width = w;
+            originalCanvas.height = h;
+            binaryCanvas.width = w;
+            binaryCanvas.height = h;
+            ctxOrig.clearRect(0, 0, w, h);
+            const grad = ctxOrig.createLinearGradient(0, 0, w, h);
+            grad.addColorStop(0, '#ff9a9e');
+            grad.addColorStop(1, '#fecfef');
+            ctxOrig.fillStyle = grad;
+            ctxOrig.fillRect(0, 0, w, h);
+            ctxOrig.fillStyle = '#3b82f6';
+            ctxOrig.beginPath();
+            ctxOrig.arc(100, 120, 45, 0, Math.PI*2);
+            ctxOrig.fill();
+            ctxOrig.fillStyle = '#eab308';
+            ctxOrig.fillRect(320, 280, 110, 80);
+            ctxOrig.fillStyle = '#14b8a6';
+            ctxOrig.font = 'bold 24px system-ui';
+            ctxOrig.fillText("二值化", 40, 340);
+            for(let i=0;i<200;i++){
+                ctxOrig.fillStyle = `rgba(0,0,0,${Math.random()*0.4})`;
+                ctxOrig.fillRect(Math.random()*w, Math.random()*h, 2,2);
+            }
+            originalImageData = ctxOrig.getImageData(0, 0, w, h);
+            const thr = parseInt(thresholdSlider.value, 10);
+            renderBinaryWithThreshold(thr);
+            originalInfo.innerHTML = '🖼️ 已重置为内置演示图像 (彩色组合图)';
+            binaryStatus.innerHTML = `🔄 重置完成，阈值 ${thr}`;
+        }
+        
+        // 下载二值图像
+        function downloadBinary() {
+            if (!currentBinaryImageData && !imageLoaded) {
+                alert("没有二值化图像数据，请先上传图片或点击应用阈值");
+                return;
+            }
+            // 确保 binaryCanvas 上有最新的图像 (如果 currentBinaryImageData 存在)
+            if (currentBinaryImageData) {
+                try {
+                    const link = document.createElement('a');
+                    link.download = 'binary_image.png';
+                    link.href = binaryCanvas.toDataURL('image/png');
+                    link.click();
+                    binaryStatus.innerHTML = '📥 下载成功！';
+                    setTimeout(()=>{ binaryStatus.innerHTML = '✓ 可继续调节阈值' }, 1500);
+                } catch(e){
+                    alert("下载失败，可尝试截图");
+                }
+            } else {
+                // 后备
+                const thresh = parseInt(thresholdSlider.value, 10);
+                if(originalImageData){
+                    const tempBinary = computeBinaryImageData(thresh);
+                    if(tempBinary){
+                        ctxBinary.putImageData(tempBinary, 0, 0);
+                        currentBinaryImageData = tempBinary;
+                        const link = document.createElement('a');
+                        link.download = 'binary_image.png';
+                        link.href = binaryCanvas.toDataURL('image/png');
+                        link.click();
+                    }
+                }
+            }
+        }
+        
+        // 事件绑定
+        uploadInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                loadImageFromFile(e.target.files[0]);
+            }
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            resetToDefault();
+        });
+        
+        // 滑块值显示
+        thresholdSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            thresholdValueSpan.innerText = val;
+        });
+        
+        applyBtn.addEventListener('click', () => {
+            if (!originalImageData) {
+                alert("请先上传图片或使用默认图像");
+                return;
+            }
+            const thresh = parseInt(thresholdSlider.value, 10);
+            renderBinaryWithThreshold(thresh);
+        });
+        
+        invertBtn.addEventListener('click', () => {
+            invertBinary();
+        });
+        
+        downloadBtn.addEventListener('click', () => {
+            downloadBinary();
+        });
+        
+        // 初始化默认
+        drawDefaultPattern();
+        
+        // 添加上传区增强：拖拽上传
+        const dropZone = document.querySelector('.card');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.opacity = '0.95';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.opacity = '1';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.opacity = '1';
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.match('image.*')) {
+                loadImageFromFile(file);
+            } else {
+                alert("请拖入图片文件");
+            }
+        });
+    })();
+</script>
+</body>
+</html>
