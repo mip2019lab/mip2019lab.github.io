@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>手写签名加粗工具｜支持上传图片加粗</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none; /* 避免画板时意外选中文字，输入框区域保留选择 */
+        }
+
+        body {
+            background: linear-gradient(145deg, #e0e5ec 0%, #f0f4fa 100%);
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(2px);
+            border-radius: 56px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.05);
+            padding: 24px 28px 36px;
+            transition: all 0.2s ease;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+            color: #1a2c3e;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        h1 small {
+            font-size: 0.75rem;
+            font-weight: normal;
+            background: #d9e2ef;
+            padding: 6px 12px;
+            border-radius: 40px;
+            color: #2c3e66;
+        }
+
+        .sub {
+            color: #4a627a;
+            border-left: 4px solid #3b82f6;
+            padding-left: 14px;
+            margin: 12px 0 20px 0;
+            font-weight: 500;
+        }
+
+        /* 三栏灵活布局：手写原图区 + 加粗预览区 + 上传图片区 (使用flex wrap) */
+        .sig-dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .sig-card {
+            flex: 1;
+            min-width: 260px;
+            background: #fefefe;
+            border-radius: 32px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            padding: 18px 16px 20px 16px;
+            transition: all 0.2s;
+        }
+
+        .sig-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin: 0 0 12px 0;
+            color: #1f3a4b;
+        }
+
+        .canvas-wrapper {
+            background: white;
+            border-radius: 24px;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: center;
+            cursor: crosshair;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: white;
+            border-radius: 20px;
+            touch-action: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #f1f5f9;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 48px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1e293b;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        button.primary {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 2px 6px rgba(59,130,246,0.3);
+        }
+
+        button.primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        button.warning {
+            background: #f97316;
+            color: white;
+        }
+
+        button.success {
+            background: #10b981;
+            color: white;
+        }
+
+        button:hover {
+            background: #e2e8f0;
+            transform: translateY(-1px);
+        }
+
+        .stroke-slider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #eef3fc;
+            padding: 5px 14px;
+            border-radius: 48px;
+        }
+
+        .stroke-slider label {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        input[type="range"] {
+            width: 130px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #cbd5e1;
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+
+        .bold-value {
+            min-width: 45px;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 32px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .bold-actions {
+            background: #eef2ff;
+            border-radius: 28px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .badge {
+            background: #334155;
+            color: white;
+            border-radius: 80px;
+            padding: 4px 12px;
+            font-size: 0.7rem;
+        }
+
+        .upload-area {
+            background: #f8fafc;
+            border-radius: 28px;
+            padding: 12px;
+            text-align: center;
+            border: 1px dashed #a0c0e6;
+            margin-top: 12px;
+        }
+
+        .upload-btn {
+            background: #ffffff;
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .upload-btn:hover {
+            background: #eef2ff;
+        }
+
+        .file-info {
+            font-size: 0.7rem;
+            color: #4b6b8f;
+            margin-top: 8px;
+        }
+
+        footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #5b6e8c;
+            border-top: 1px solid #dce5f0;
+            padding-top: 18px;
+        }
+
+        @media (max-width: 860px) {
+            .card {
+                padding: 18px;
+            }
+            .sig-card h3 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>
+        ✍️ 手写签名加粗 · 支持图像输入
+        <small>手绘 + 上传签名图 ｜ 一键加粗</small>
+    </h1>
+    <div class="sub">
+        📌 左侧画板手写签名 · 中间实时加粗预览 · 右侧「上传图片」可载入已有签名并自动加粗。
+        <span style="background:#eef2ff; padding:2px 10px; border-radius:20px;">✨ 支持 PNG/JPG 签名图片，智能融合笔迹加粗</span>
+    </div>
+
+    <div class="sig-dashboard">
+        <!-- 左侧：原始手写画板区 -->
+        <div class="sig-card">
+            <h3>🖌️ 手写原稿</h3>
+            <div class="canvas-wrapper">
+                <canvas id="originalCanvas" width="600" height="300" style="width:100%; height:auto; aspect-ratio:600/300"></canvas>
+            </div>
+            <div class="toolbar">
+                <div class="btn-group">
+                    <button id="clearBtn" title="清空画板">🗑️ 清空</button>
+                    <button id="undoBtn" title="撤销上一笔">↩️ 撤销</button>
+                </div>
+                <div class="stroke-slider">
+                    <label>✒️ 笔刷</label>
+                    <input type="range" id="brushSize" min="2" max="20" step="1" value="4">
+                    <span id="brushValue" class="bold-value">4px</span>
+                </div>
+            </div>
+            <div class="info-note" style="font-size:0.7rem; text-align:center; margin-top:8px;">
+                💡 鼠标/手指直接书写，右侧加粗效果实时同步。
+            </div>
+        </div>
+
+        <!-- 中间：加粗签名预览区 (动态加粗显示) -->
+        <div class="sig-card">
+            <h3>⚡ 加粗签名 <span style="font-size:0.7rem;">(智能增强)</span></h3>
+            <div class="canvas-wrapper">
+                <canvas id="boldCanvas" width="600" height="300" style="width:100%; height:auto; aspect-ratio:600/300"></canvas>
+            </div>
+            <div class="bold-actions">
+                <div class="btn-group">
+                    <button id="strongBoldBtn" class="primary">🔨 强力加粗 +</button>
+                    <button id="fineBoldBtn">✨ 精细增强</button>
+                    <button id="resetBoldBtn" class="warning">🔄 重置加粗</button>
+                </div>
+                <span class="badge" id="boldStatus">加粗系数: 标准(1.0x)</span>
+            </div>
+            <div class="info-note" style="font-size:0.7rem; text-align:center;">
+                🖱️ 右键点击右侧加粗画布 → 保存为PNG图片
+            </div>
+        </div>
+
+        <!-- 右侧：图像上传 & 额外工具 -->
+        <div class="sig-card">
+            <h3>📷 输入图像加粗</h3>
+            <div class="upload-area">
+                <input type="file" id="uploadSignature" accept="image/png, image/jpeg, image/jpg, image/bmp" style="display:none" />
+                <button id="triggerUpload" class="upload-btn">📂 上传签名图片</button>
+                <div class="file-info" id="uploadInfo">支持 PNG / JPG (背景尽量白底黑字或深色笔迹)</div>
+                <button id="mergeFromImageBtn" class="success" style="margin-top:12px; background:#10b981;">🖼️ 载入并加粗</button>
+                <button id="resetToHandwriting" style="margin-top:8px;">✋ 仅保留手写内容</button>
+                <div class="info-note" style="margin-top:12px; background:#f1f5f9;">
+                    ⚡ 上传后自动将图片绘制到手写原稿区，你可以继续叠加书写，再整体加粗！
+                </div>
+            </div>
+            <div class="toolbar" style="justify-content:center; margin-top:16px;">
+                <button id="exportBoldBtn" class="primary" style="background:#475569;">💾 保存加粗签名</button>
+            </div>
+        </div>
+    </div>
+    <footer>
+        ✅ 完全本地处理，签名数据不会上传。加粗算法基于笔画路径扩展，支持上传图片后自动提取笔迹并增强厚度。
+    </footer>
+</div>
+
+<script>
+    (function(){
+        // ---------- DOM 元素 ----------
+        const originalCanvas = document.getElementById('originalCanvas');
+        const boldCanvas = document.getElementById('boldCanvas');
+        const ctxOrig = originalCanvas.getContext('2d');
+        const ctxBold = boldCanvas.getContext('2d');
+        
+        const CANVAS_W = 600;
+        const CANVAS_H = 300;
+        function setCanvasSize(canvas, w, h) {
+            canvas.width = w;
+            canvas.height = h;
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+        }
+        setCanvasSize(originalCanvas, CANVAS_W, CANVAS_H);
+        setCanvasSize(boldCanvas, CANVAS_W, CANVAS_H);
+        
+        function initBackground(ctx, w, h) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, w, h);
+        }
+        initBackground(ctxOrig, CANVAS_W, CANVAS_H);
+        initBackground(ctxBold, CANVAS_W, CANVAS_H);
+        
+        // 原始画板绘制风格
+        ctxOrig.lineCap = 'round';
+        ctxOrig.lineJoin = 'round';
+        ctxOrig.strokeStyle = '#000000';
+        let currentBrushSize = 4;
+        const brushSlider = document.getElementById('brushSize');
+        const brushValueSpan = document.getElementById('brushValue');
+        
+        // ----- 数据结构：存储 strokes（手绘路径） + 额外图片层标记（可选）
+        // 为了统一加粗，将图片也转换成“模拟路径”的方式不太现实，我们采用更稳健策略：
+        // 上传的图片作为背景绘制到originalCanvas，但在加粗时如何处理？
+        // 核心需求：对上传的图像签名进行加粗 => 本工具原理: 基于原始画板内容计算加粗。但为了更聪明的加粗，我们需要支持：
+        // 方式：将上传的签名图片融合至原画板，并在每次加粗时使用图像边缘检测加粗？ 
+        // 为了让加粗更真实，我们采用“图像边缘膨胀算法”对上传图片进行单独加粗？但会复杂。
+        // 另一种优雅方案：上传图片后，将其绘制到 originalCanvas 作为背景，然后用户可额外手写；加粗时是对整个画板内容进行卷积加粗（类似滤镜），
+        // 但为保持体验简单且强大，我们实现一个“对当前Original画板快照进行Morphology膨胀”来加粗图像签名？可能会复杂且性能下降。
+        // 更稳定且符合直觉：上传图片后，我们将其解析并“模拟为笔迹图片”，再利用“边缘膨胀滤波器”对图片进行加粗生成到加粗画板。
+        // 为了让用户体验专业，且不丢失手绘功能，我们增加一个图片叠加层并让加粗功能同时对手绘strokes及图像内容进行智能膨胀。
+        // 实现计划: 单独存储一个“背景图像数据” (uploadedImageData)，加粗时绘制背景图像+基于原strokes绘制，然后用图形加粗算法对最终像素进行膨胀处理。
+        // 这样任何上传的签名都能“物理加粗”，并且保留手写笔迹。需要性能，但简单可靠。
+        
+        let strokes = [];          // 存储手绘笔画 {points, brushSize}
+        let currentStroke = [];
+        let isDrawing = false;
+        let uploadedImageCache = null;   // 存储上传的Image对象或者null
+        let needRedrawOriginal = true;
+        
+        // 重绘原始画板（手绘笔画 + 上传图片背景）
+        function redrawOriginalCanvas() {
+            initBackground(ctxOrig, CANVAS_W, CANVAS_H);
+            // 1. 绘制上传的图片 (如果有)
+            if (uploadedImageCache) {
+                try {
+                    ctxOrig.drawImage(uploadedImageCache, 0, 0, CANVAS_W, CANVAS_H);
+                } catch(e) { console.warn(e); }
+            }
+            // 2. 绘制所有手绘笔画
+            ctxOrig.lineCap = 'round';
+            ctxOrig.lineJoin = 'round';
+            ctxOrig.strokeStyle = '#000000';
+            for (const stroke of strokes) {
+                if (!stroke.points || stroke.points.length < 2) {
+                    if (stroke.points && stroke.points.length === 1) {
+                        const p = stroke.points[0];
+                        ctxOrig.beginPath();
+                        ctxOrig.arc(p.x, p.y, stroke.brushSize / 2, 0, Math.PI*2);
+                        ctxOrig.fillStyle = '#000000';
+                        ctxOrig.fill();
+                    }
+                    continue;
+                }
+                ctxOrig.beginPath();
+                ctxOrig.lineWidth = stroke.brushSize;
+                ctxOrig.moveTo(stroke.points[0].x, stroke.points[0].y);
+                for (let i=1; i<stroke.points.length; i++) {
+                    ctxOrig.lineTo(stroke.points[i].x, stroke.points[i].y);
+                }
+                ctxOrig.stroke();
+            }
+        }
+        
+        // ---------- 高级加粗算法：基于当前原始画板像素进行“笔画膨胀”并对加粗画板生成加粗签名 ----------
+        // 为了既支持手写笔画又支持上传图片笔迹加粗，我们采用“基于原始画板内容提取黑色像素区域并使用形态学膨胀”方案。
+        // 优化：膨胀半径根据用户调节的加粗系数决定（系数范围1.0~2.8）。
+        let boldFactor = 1.0;
+        
+        // 生成加粗签名：对原始画板的当前内容进行膨胀加粗
+        function renderBoldFromOriginal() {
+            // 先确保原始画板是最新内容 (手绘+上传图片)
+            redrawOriginalCanvas();
+            // 获取原始画板的像素数据
+            const srcData = ctxOrig.getImageData(0, 0, CANVAS_W, CANVAS_H);
+            const dstData = ctxBold.createImageData(CANVAS_W, CANVAS_H);
+            // 初始化白色背景
+            for (let i=0; i<dstData.data.length; i+=4) {
+                dstData.data[i] = 255;
+                dstData.data[i+1] = 255;
+                dstData.data[i+2] = 255;
+                dstData.data[i+3] = 255;
+            }
+            
+            // 膨胀半径: 基于boldFactor (系数1时膨胀半径0~1基础，系数越大半径越大)
+            let radius = Math.floor((boldFactor - 0.8) * 2.2);
+            if (radius < 1) radius = 1;
+            if (radius > 7) radius = 7;
+            // 额外根据加粗系数微调: 如果强力加粗模式，提升膨胀迭代感
+            if (boldFactor >= 1.8) radius = Math.min(9, radius+1);
+            
+            // 快速提取源图中黑色或深色像素（阈值判断：亮度<80 认为是笔迹）
+            const isDark = (r,g,b) => (r+g+b) < 120;
+            let mask = Array(CANVAS_W * CANVAS_H).fill(false);
+            for (let y=0; y<CANVAS_H; y++) {
+                for (let x=0; x<CANVAS_W; x++) {
+                    const idx = (y * CANVAS_W + x) * 4;
+                    const r = srcData.data[idx];
+                    const g = srcData.data[idx+1];
+                    const b = srcData.data[idx+2];
+                    if (isDark(r,g,b)) {
+                        mask[y * CANVAS_W + x] = true;
+                    }
+                }
+            }
+            
+            // 膨胀操作：遍历所有黑色像素周边半径区域
+            let expandedMask = Array(CANVAS_W * CANVAS_H).fill(false);
+            for (let y=0; y<CANVAS_H; y++) {
+                for (let x=0; x<CANVAS_W; x++) {
+                    if (mask[y * CANVAS_W + x]) {
+                        for (let dy = -radius; dy <= radius; dy++) {
+                            for (let dx = -radius; dx <= radius; dx++) {
+                                const nx = x + dx;
+                                const ny = y + dy;
+                                if (nx>=0 && nx<CANVAS_W && ny>=0 && ny<CANVAS_H) {
+                                    const dist = Math.sqrt(dx*dx+dy*dy);
+                                    if (dist <= radius) {
+                                        expandedMask[ny * CANVAS_W + nx] = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 绘制加粗后黑色像素
+            for (let y=0; y<CANVAS_H; y++) {
+                for (let x=0; x<CANVAS_W; x++) {
+                    if (expandedMask[y * CANVAS_W + x]) {
+                        const idx = (y * CANVAS_W + x) * 4;
+                        dstData.data[idx] = 0;
+                        dstData.data[idx+1] = 0;
+                        dstData.data[idx+2] = 0;
+                        dstData.data[idx+3] = 255;
+                    }
+                }
+            }
+            ctxBold.putImageData(dstData, 0, 0);
+            // 更新UI加粗系数显示
+            const statusSpan = document.getElementById('boldStatus');
+            if (boldFactor === 1.0) statusSpan.innerText = `加粗系数: 标准(1.0x)`;
+            else if (boldFactor > 1.6) statusSpan.innerText = `加粗系数: 强力(${boldFactor.toFixed(1)}x)`;
+            else statusSpan.innerText = `加粗系数: 增强(${boldFactor.toFixed(1)}x)`;
+        }
+        
+        // 刷新整体：重绘原始 -> 更新加粗
+        function refreshAll() {
+            redrawOriginalCanvas();
+            renderBoldFromOriginal();
+        }
+        
+        // 提交当前手绘笔画
+        function commitCurrentStroke() {
+            if (currentStroke.length === 0) return;
+            strokes.push({
+                points: currentStroke.map(p => ({x:p.x, y:p.y})),
+                brushSize: currentBrushSize
+            });
+            currentStroke = [];
+            refreshAll();
+        }
+        
+        function undoLastStroke() {
+            if (strokes.length === 0) return;
+            strokes.pop();
+            refreshAll();
+        }
+        
+        function clearAll() {
+            strokes = [];
+            uploadedImageCache = null;
+            refreshAll();
+            document.getElementById('uploadInfo').innerHTML = '已清空图像，支持 PNG / JPG';
+        }
+        
+        // 上传图片相关逻辑
+        const fileInput = document.getElementById('uploadSignature');
+        const triggerBtn = document.getElementById('triggerUpload');
+        const mergeImageBtn = document.getElementById('mergeFromImageBtn');
+        const resetHandBtn = document.getElementById('resetToHandwriting');
+        
+        let pendingImageFile = null;
+        triggerBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                pendingImageFile = e.target.files[0];
+                document.getElementById('uploadInfo').innerHTML = `✅ 已选择: ${pendingImageFile.name}，点击「载入并加粗」`;
+            }
+        });
+        
+        mergeImageBtn.addEventListener('click', () => {
+            if (!pendingImageFile) {
+                alert('请先选择图片文件');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    // 将图片绘制到临时canvas缩放至画板尺寸
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = CANVAS_W;
+                    tempCanvas.height = CANVAS_H;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.drawImage(img, 0, 0, CANVAS_W, CANVAS_H);
+                    // 将图片存入缓存，清除原有手写笔画（可选，可保留笔画叠加，但更符合预期：替换当前背景）
+                    // 大多数情况想基于上传的签名加粗，建议保留用户手绘？灵活：保留原有strokes但背景变为上传图。
+                    uploadedImageCache = img;
+                    // 可选不清除笔画，但一般希望全新加载，提供重置按钮，但用户也可以叠加手绘。我们不清除strokes，更自由。
+                    refreshAll();
+                    document.getElementById('uploadInfo').innerHTML = `✨ 签名已载入，可继续手写叠加，加粗系数实时生效！`;
+                    pendingImageFile = null;
+                    fileInput.value = '';
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(pendingImageFile);
+        });
+        
+        resetHandBtn.addEventListener('click', () => {
+            // 仅保留手写内容，清除上传图片背景
+            uploadedImageCache = null;
+            refreshAll();
+            document.getElementById('uploadInfo').innerHTML = `仅保留手绘笔迹，图片已移除。`;
+        });
+        
+        // 导出加粗签名
+        document.getElementById('exportBoldBtn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'bold_signature.png';
+            link.href = boldCanvas.toDataURL('image/png');
+            link.click();
+        });
+        
+        // 加粗控制按钮
+        document.getElementById('strongBoldBtn').addEventListener('click', () => {
+            boldFactor = Math.min(2.6, boldFactor + 0.4);
+            renderBoldFromOriginal();
+        });
+        document.getElementById('fineBoldBtn').addEventListener('click', () => {
+            boldFactor = Math.min(2.2, boldFactor + 0.2);
+            renderBoldFromOriginal();
+        });
+        document.getElementById('resetBoldBtn').addEventListener('click', () => {
+            boldFactor = 1.0;
+            renderBoldFromOriginal();
+        });
+        document.getElementById('clearBtn').addEventListener('click', clearAll);
+        document.getElementById('undoBtn').addEventListener('click', undoLastStroke);
+        
+        // 笔刷调整
+        function updateBrush() {
+            currentBrushSize = parseInt(brushSlider.value, 10);
+            brushValueSpan.innerText = currentBrushSize + 'px';
+        }
+        brushSlider.addEventListener('input', updateBrush);
+        updateBrush();
+        
+        // 绘制交互
+        function getCanvasCoords(e, canvas) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let cx, cy;
+            if (e.touches) {
+                if (!e.touches.length) return null;
+                cx = e.touches[0].clientX;
+                cy = e.touches[0].clientY;
+            } else {
+                cx = e.clientX;
+                cy = e.clientY;
+            }
+            let ox = cx - rect.left;
+            let oy = cy - rect.top;
+            ox = Math.min(Math.max(0, ox), rect.width);
+            oy = Math.min(Math.max(0, oy), rect.height);
+            return { x: ox * scaleX, y: oy * scaleY };
+        }
+        
+        function startDraw(e) {
+            e.preventDefault();
+            const coord = getCanvasCoords(e, originalCanvas);
+            if (!coord) return;
+            isDrawing = true;
+            currentStroke = [{ x: coord.x, y: coord.y }];
+            // 实时绘制一个点
+            ctxOrig.beginPath();
+            ctxOrig.arc(coord.x, coord.y, currentBrushSize/2, 0, Math.PI*2);
+            ctxOrig.fillStyle = '#000000';
+            ctxOrig.fill();
+        }
+        function drawMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const coord = getCanvasCoords(e, originalCanvas);
+            if (!coord) return;
+            const last = currentStroke[currentStroke.length-1];
+            if (last && Math.hypot(last.x - coord.x, last.y - coord.y) < 1.5) return;
+            currentStroke.push({ x: coord.x, y: coord.y });
+            if (currentStroke.length >= 2) {
+                const p1 = currentStroke[currentStroke.length-2];
+                const p2 = coord;
+                ctxOrig.beginPath();
+                ctxOrig.lineWidth = currentBrushSize;
+                ctxOrig.moveTo(p1.x, p1.y);
+                ctxOrig.lineTo(p2.x, p2.y);
+                ctxOrig.stroke();
+            }
+        }
+        function endDraw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            isDrawing = false;
+            if (currentStroke.length > 0) commitCurrentStroke();
+            else currentStroke = [];
+        }
+        
+        originalCanvas.addEventListener('mousedown', startDraw);
+        window.addEventListener('mousemove', drawMove);
+        window.addEventListener('mouseup', endDraw);
+        originalCanvas.addEventListener('touchstart', startDraw, {passive: false});
+        originalCanvas.addEventListener('touchmove', drawMove, {passive: false});
+        originalCanvas.addEventListener('touchend', endDraw);
+        originalCanvas.addEventListener('touchcancel', endDraw);
+        
+        // 右键保存加粗画板
+        boldCanvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const link = document.createElement('a');
+            link.download = 'bold_signature.png';
+            link.href = boldCanvas.toDataURL('image/png');
+            link.click();
+        });
+        
+        // 初始化加粗显示
+        refreshAll();
+    })();
+</script>
+</body>
+</html>
