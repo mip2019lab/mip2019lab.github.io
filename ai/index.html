@@ -111,15 +111,6 @@
             transform: scale(0.97);
         }
 
-        /* 选中态 (通过 JS 或 :target 实现，这里我们使用 .active 类演示，配合右侧内容切换) */
-        .link-item.active {
-            background: #eef4fa;
-            border-left-color: #e4393c;
-            color: #c12528;
-            font-weight: 600;
-            padding-left: 20px;
-        }
-
         /* 左侧小图标点缀 (纯CSS) */
         .link-item::before {
             content: "›";
@@ -273,11 +264,6 @@
                 padding: 24px 20px;
             }
 
-            .link-item {
-                padding: 10px 14px;
-                font-size: 0.9rem;
-            }
-
             .right-header h2 {
                 font-size: 1.3rem;
             }
@@ -310,23 +296,6 @@
         .bg-soft-red {
             background: #fce9e9;
         }
-
-        /* 用于演示：模拟右侧内容切换（通过JS或锚点，这里使用纯CSS锚点+ :target 配合，但更好的做法是js，这里我们使用js实现无刷新切换） 
-           但为了符合“href”要求，链接使用 # 锚点，并用js捕获切换内容。 
-           同时保证链接可点击且不刷新页面，内容更新。 
-        */
-        .hidden-content {
-            display: none;
-        }
-
-        .visible-content {
-            display: block;
-        }
-
-        /* 过渡动效 */
-        .intro-content {
-            transition: opacity 0.2s ease;
-        }
     </style>
 </head>
 <body>
@@ -341,14 +310,12 @@
                 <span>12</span>
             </div>
             <div class="link-list">
-                <!-- 使用 href="#page-xxx" 锚点，配合 JS 拦截切换内容，同时保留链接语义 -->
-                <a href="sign.html" >黑体电子签名</a>
-                <a href="edge.html" >简笔画</a>
-                <a href="bw.html" >黑白照片</a>
-                <a href="qrcode.html" >生成二维码</a>
-                <a href="classinter.html">课堂互动</a>
-                <a href="#page-sport" >⚽ 运动户外</a>
-                <a href="#page-home" >🏷️ 品牌精选</a>
+                <!-- 使用 href 直接链接到对应的页面 -->
+                <a href="sign.html" class="link-item">黑体电子签</a>
+                <a href="edge.html" class="link-item">简笔画</a>
+                <a href="bw.html" class="link-item">黑白照片</a>
+                <a href="qrcode.html" class="link-item">生成二维码</a>
+                <a href="classinter.html" class="link-item">课堂互动</a>
             </div>
             <!-- 左侧底部装饰 -->
             <div style="margin-top: 30px; font-size: 0.7rem; color: #b0c3d4; border-top: 1px solid #e5eaf0; padding-top: 16px; text-align: center;">
@@ -356,247 +323,46 @@
             </div>
         </div>
 
-        <!-- 右侧：页面介绍 (根据左侧点击切换) -->
+        <!-- 右侧：页面介绍 -->
         <div class="nav-right">
+            <!-- 右侧头部：标题显示“首页 · 精选” -->
             <div class="right-header">
-                <h2 id="pageTitle">🏠 首页 · 精选</h2>
+                <h2>🏠 首页 · 精选</h2>
                 <span class="sub-tag">🔥 热门</span>
             </div>
 
-            <!-- 介绍内容容器，通过 data 属性切换显示 -->
-            <div id="introContainer" class="intro-content">
-                <!-- 首页介绍 (默认可见) -->
-                <div id="page-home" class="intro-card visible-content">
+            <!-- 介绍内容 -->
+            <div class="intro-content">
+                <div class="intro-card">
                     <h3>📌 首页概览 <i>热门</i></h3>
-                    <p>欢迎来到导航中心！这里汇聚了这是一款轻量化智能图片处理工具，无需专业技能，上传照片即可快速完成三类特色效果转换。
-
-工具可自动从手写签名照片中提取笔迹，规整生成清晰醒目的黑体加粗电子签名，边缘锐利无杂色，直接适配文档签署、线上表单等正式场景，解决手写签名扫描后模糊发虚的痛点。
-
-图像二值化功能通过智能阈值算法，将照片转化为纯黑纯白的高对比度效果，过滤背景噪点、强化内容轮廓，让文档、票据翻拍图处理后干净清晰，方便存档与文字识别。
-
-简笔画效果会提取照片主体关键线条，弱化冗余色彩细节，把写实照片转为线条流畅的简约简笔画，人像、风景、静物均可适配，可直接用于手账、课件配图。全程无需调参，数秒即可出结果。</p>
+                    <p>这是一款轻量化智能图片处理工具，无需专业技能，上传照片即可快速完成三类特色效果转换。</p>
+                    <p>工具可自动从手写签名照片中提取笔迹，规整生成清晰醒目的黑体加粗电子签名，边缘锐利无杂色，直接适配文档签署、线上表单等正式场景，解决手写签名扫描后模糊发虚的痛点。</p>
+                    <p>图像二值化功能通过智能阈值算法，将照片转化为纯黑纯白的高对比度效果，过滤背景噪点、强化内容轮廓，让文档、票据翻拍图处理后干净清晰，方便存档与文字识别。</p>
+                    <p>简笔画效果会提取照片主体关键线条，弱化冗余色彩细节，把写实照片转为线条流畅的简约简笔画，人像、风景、静物均可适配，可直接用于手账、课件配图。全程无需调参，数秒即可出结果。</p>
                     <div class="meta">
                         <span>🕒 今日更新 12+</span>
                         <span>👥 浏览 3.2k</span>
                         <span>⭐ 推荐</span>
                     </div>
                 </div>
-
-                <!-- 数码产品 -->
-                <div id="page-digital" class="intro-card hidden-content">
-                    <h3>📱 数码产品 <i>新品</i></h3>
-                    <p>最新智能手机、笔记本电脑、智能穿戴设备，以及各种黑科技配件。一站式了解数码前沿，享受科技生活。</p>
-                    <div class="meta">
-                        <span>📱 新品 8款</span>
-                        <span>⚡ 热销 1200+</span>
-                        <span>🔋 5G 专享</span>
-                    </div>
-                </div>
-
-                <!-- 时尚服饰 -->
-                <div id="page-fashion" class="intro-card hidden-content">
-                    <h3>👗 时尚服饰 <i>潮流</i></h3>
-                    <p>男女装、鞋包、配饰，国际大牌与独立设计师品牌汇聚。季节新款、联名系列，穿搭灵感源源不断。</p>
-                    <div class="meta">
-                        <span>🧥 春夏新款</span>
-                        <span>👠 大牌直降</span>
-                        <span>🛍️ 精选 200+</span>
-                    </div>
-                </div>
-
-                <!-- 生鲜食品 -->
-                <div id="page-food" class="intro-card hidden-content">
-                    <h3>🍜 生鲜食品 <i>新鲜</i></h3>
-                    <p>产地直送、时令果蔬、肉禽海鲜、进口零食。每日新鲜供应，品质保障，一键下单，快速到家。</p>
-                    <div class="meta">
-                        <span>🌿 有机认证</span>
-                        <span>🚚 次日达</span>
-                        <span>🍎 满减优惠</span>
-                    </div>
-                </div>
-
-                <!-- 图书文创 -->
-                <div id="page-book" class="intro-card hidden-content">
-                    <h3>📚 图书文创 <i>阅读</i></h3>
-                    <p>畅销书、文学经典、儿童绘本、艺术设计、文具手账。在书海中探索世界，用创意点亮生活。</p>
-                    <div class="meta">
-                        <span>📖 新书榜单</span>
-                        <span>✏️ 文具礼盒</span>
-                        <span>🎁 满赠活动</span>
-                    </div>
-                </div>
-
-                <!-- 运动户外 -->
-                <div id="page-sport" class="intro-card hidden-content">
-                    <h3>⚽ 运动户外 <i>活力</i></h3>
-                    <p>跑步、健身、露营、骑行、球类装备。专业品牌，高性价比，陪你挑战自我，享受户外乐趣。</p>
-                    <div class="meta">
-                        <span>🏃 跑步鞋</span>
-                        <span>⛺ 露营装备</span>
-                        <span>🎯 限时折扣</span>
-                    </div>
-                </div>
-
-                <!-- 品牌精选 (复用首页内容示例，也可以单独) 但为了展示，单独做一条 -->
-                <div id="page-brand" class="intro-card hidden-content">
-                    <h3>🏷️ 品牌精选 <i>独家</i></h3>
-                    <p>国际国内一线品牌官方直供，品质保证。数码、服饰、美妆、家居，品牌日专属优惠，不容错过。</p>
-                    <div class="meta">
-                        <span>🏷️ 大牌5折起</span>
-                        <span>🎉 品牌会员</span>
-                        <span>📦 正品保障</span>
-                    </div>
-                </div>
             </div>
 
-            <!-- 右侧底部：辅助链接 -->
+            <!-- 右侧底部 -->
             <div class="right-footer">
                 <span>📌 当前分类 · 内容持续更新</span>
-                <a href="#page-home" data-page="home" style="background:transparent; padding:0; color:#2f5f8a;">↻ 回到首页</a>
+                <a href="sign.html" style="background:transparent; padding:0; color:#2f5f8a;">↻ 回到首页</a>
             </div>
         </div>
     </div>
-     <br>
-     <div align="center"> 
+    <br>
+    <div align="center"> 
         <footer>
-        ✅ 完全本地处理，数据不上传。
-        <br>
-        <font style="font-size:small;">版权所有©曲阜师范大学计算机学院《Web程序设计》课程团队</font>
-    </footer>
+            ✅ 完全本地处理，数据不上传。
+            <br>
+            <font style="font-size:small;">版权所有©曲阜师范大学计算机学院《Web程序设计》课程团队</font>
+        </footer>
+    </div>
 </div>
 
-</div>
-
-<!-- 交互 JS：实现点击左侧链接切换右侧内容，同时高亮左侧菜单，完全无刷新 -->
-<script>
-    (function() {
-        // 获取所有左侧链接
-        const linkItems = document.querySelectorAll('.link-item');
-        // 获取所有右侧内容卡片 (通过 id 匹配)
-        const contentCards = document.querySelectorAll('.intro-card');
-        // 右侧标题元素
-        const pageTitle = document.getElementById('pageTitle');
-
-        // 映射关系: data-page 与 标题文本 (可动态)
-        const titleMap = {
-            'home': '🏠 首页 · 精选',
-            'digital': '📱 数码产品 · 前沿',
-            'fashion': '👗 时尚服饰 · 潮流',
-            'food': '🍜 生鲜食品 · 新鲜',
-            'book': '📚 图书文创 · 阅读',
-            'sport': '⚽ 运动户外 · 活力',
-            'brand': '🏷️ 品牌精选 · 独家'
-        };
-
-        // 切换内容的函数
-        function switchPage(pageId) {
-            // 1. 隐藏所有内容卡片
-            contentCards.forEach(card => {
-                card.classList.add('hidden-content');
-                card.classList.remove('visible-content');
-            });
-
-            // 2. 显示目标卡片 (通过 id)
-            const targetCard = document.getElementById('page-' + pageId);
-            if (targetCard) {
-                targetCard.classList.remove('hidden-content');
-                targetCard.classList.add('visible-content');
-            } else {
-                // fallback: 如果找不到对应卡片，显示首页
-                const homeCard = document.getElementById('page-home');
-                if (homeCard) {
-                    homeCard.classList.remove('hidden-content');
-                    homeCard.classList.add('visible-content');
-                }
-            }
-
-            // 3. 更新右侧标题
-            if (titleMap[pageId]) {
-                pageTitle.textContent = titleMap[pageId];
-            } else {
-                pageTitle.textContent = '📌 导航 · ' + pageId;
-            }
-
-            // 4. 左侧链接高亮切换
-            linkItems.forEach(link => {
-                link.classList.remove('active');
-                // 通过 data-page 匹配
-                if (link.getAttribute('data-page') === pageId) {
-                    link.classList.add('active');
-                }
-            });
-
-            // 5. 更新地址栏 hash (不触发滚动)
-            if (history.pushState) {
-                history.pushState(null, '', '#page-' + pageId);
-            }
-        }
-
-        // 绑定点击事件到每个左侧链接
-        linkItems.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();  // 阻止默认锚点跳转
-                const page = this.getAttribute('data-page');
-                if (page) {
-                    switchPage(page);
-                } else {
-                    // 若没有 data-page，则使用 href 中的 page 名称 (容错)
-                    const href = this.getAttribute('href');
-                    if (href && href.startsWith('#page-')) {
-                        const pageFromHref = href.replace('#page-', '');
-                        switchPage(pageFromHref);
-                    } else {
-                        // 默认首页
-                        switchPage('home');
-                    }
-                }
-            });
-        });
-
-        // 处理页面加载时的 hash (直接访问 #page-xxx)
-        function handleHashOnLoad() {
-            const hash = window.location.hash;
-            if (hash && hash.startsWith('#page-')) {
-                const page = hash.replace('#page-', '');
-                // 等待DOM完全加载后切换
-                setTimeout(() => {
-                    switchPage(page);
-                }, 10);
-            } else {
-                // 默认高亮首页，保证 active 状态
-                const defaultLink = document.querySelector('.link-item[data-page="home"]');
-                if (defaultLink) {
-                    linkItems.forEach(l => l.classList.remove('active'));
-                    defaultLink.classList.add('active');
-                }
-            }
-        }
-
-        // 右侧底部 “回到首页” 链接点击
-        const backHomeLink = document.querySelector('.right-footer a[data-page="home"]');
-        if (backHomeLink) {
-            backHomeLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                switchPage('home');
-            });
-        }
-
-        // 初始化
-        handleHashOnLoad();
-
-        // 监听 hashchange 事件 (当用户手动修改地址栏时)
-        window.addEventListener('hashchange', function() {
-            const hash = window.location.hash;
-            if (hash && hash.startsWith('#page-')) {
-                const page = hash.replace('#page-', '');
-                switchPage(page);
-            }
-        });
-
-        console.log('✅ 导航栏交互已启动 (左侧链接切换右侧内容)');
-    })();
-</script>
-
-<!-- 额外说明：纯div+css+js实现，无外部库，简洁高效 -->
 </body>
 </html>
