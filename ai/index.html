@@ -1,146 +1,587 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
-    <title>“启思智辅”编程初学者智能助学智能体</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航页 · 双栏布局 (类似京东)</title>
     <style>
+        /* 全局重置 & 字体 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: "Microsoft YaHei", sans-serif;
-            background-color: #f9f9f9;
-            padding: 30px;
-        }
- .line {
-            width: 800px; /* 线的长度 */
-            height: 0;
-            border-bottom: 2px solid #d6d5d5; /* 灰色线条，2px粗 */
-            
-        }
-        h1 {
-            color: #d32f2f;
+            background: #f0f2f5;
+            font-family: 'PingFang SC', 'Microsoft YaHei', Roboto, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        .code-block {
-            background-color: #2d2d2d;
-            width: 800px;
-            color: #f8f8f2;           
-            border-radius: 8px;
+        /* 卡片容器 —— 模拟京东导航卡片风格 */
+        .nav-container {
+            max-width: 1200px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 8px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            transition: box-shadow 0.25s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-container:hover {
+            box-shadow: 0 28px 56px -16px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 双栏核心布局 (flex 左右) */
+        .nav-row {
+            display: flex;
+            flex-wrap: wrap;      /* 移动端自动换行 */
+            min-height: 400px;
+        }
+
+        /* ===== 左侧栏目：分类链接 ===== */
+        .nav-left {
+            flex: 0 0 280px;      /* 固定宽度 280px，类似京东左侧分类 */
+            background: #fafbfc;
+            padding: 28px 16px 28px 24px;
+            border-right: 1px solid #e9ecf0;
+            transition: background 0.2s;
+        }
+
+        /* 左侧标题（装饰） */
+        .nav-left .category-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #8c9aa8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e1e6ec;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-left .category-title span {
+            background: #eef2f7;
+            padding: 2px 10px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            color: #2d4b6a;
+        }
+
+        /* 链接列表 */
+        .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .link-item {
+            display: block;
+            padding: 10px 16px 10px 14px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #1f2e44;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            border-left: 3px solid transparent;
+            background: transparent;
             position: relative;
-            white-space: pre;
-            font-family: monospace;
-            font-size: 16px;
-            overflow-x: auto;
         }
 
-        .error-line {
-            background-color: #4a0000;
-            width: 800px;
-             display: block;
-            padding-left: 130px;
-            border-left: 4px solid #e53935;
+        /* 左侧链接悬浮效果 —— 类似京东分类高亮 */
+        .link-item:hover {
+            background: #eef4fa;
+            color: #0f2b46;
+            border-left-color: #e4393c;   /* 京东红 */
+            padding-left: 20px;
+            transform: translateX(2px);
         }
 
-        .explanation {
-            margin-top: 20px;
-             width: 800px;
-            background-color: #fff3cd;
-            padding: 15px;
-            border-left: 6px solid #ffb300;
-            border-radius: 6px;
+        .link-item:active {
+            transform: scale(0.97);
         }
 
-        .correct-code {
-            background-color: #d4f3d7;
-            width: 830px;            
-            border-left: 6px solid #43a047;
-            margin-top: 20px;
-            white-space: pre;
-            font-family: monospace;
-            font-size: 16px;
-            border-radius: 6px;
+        /* 选中态 (通过 JS 或 :target 实现，这里我们使用 .active 类演示，配合右侧内容切换) */
+        .link-item.active {
+            background: #eef4fa;
+            border-left-color: #e4393c;
+            color: #c12528;
+            font-weight: 600;
+            padding-left: 20px;
         }
 
-        .divMap {
-            width: 1px;
-            height: 1px;
+        /* 左侧小图标点缀 (纯CSS) */
+        .link-item::before {
+            content: "›";
+            display: inline-block;
+            margin-right: 10px;
+            font-weight: 300;
+            color: #9bafc2;
+            transition: color 0.2s, transform 0.2s;
+        }
+
+        .link-item:hover::before {
+            color: #e4393c;
+            transform: translateX(2px);
+        }
+
+        /* ===== 右侧栏目：页面介绍区域 ===== */
+        .nav-right {
+            flex: 1;              /* 占满剩余宽度 */
+            padding: 28px 32px 32px 32px;
+            background: #ffffff;
+            min-width: 260px;
+        }
+
+        /* 右侧头部 (类似京东商品分类标题) */
+        .right-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #edf1f7;
+            padding-bottom: 16px;
+        }
+
+        .right-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a2b3e;
+            letter-spacing: -0.2px;
+        }
+
+        .right-header .sub-tag {
+            font-size: 0.7rem;
+            background: #eef3f9;
+            padding: 4px 14px;
+            border-radius: 60px;
+            color: #40627e;
+        }
+
+        /* 介绍内容卡片 */
+        .intro-content {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .intro-card {
+            background: #f8fafd;
+            border-radius: 20px;
+            padding: 18px 24px 22px 24px;
+            border: 1px solid #eef2f8;
+            transition: all 0.15s ease;
+        }
+
+        .intro-card:hover {
+            background: #f5f8fe;
+            border-color: #dbe2ec;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .intro-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f3855;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .intro-card h3 i {
+            font-style: normal;
+            background: #dce6f2;
+            border-radius: 40px;
+            padding: 0 10px;
+            font-size: 0.7rem;
+            color: #2f5377;
+        }
+
+        .intro-card p {
+            color: #3f5b78;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+
+        .intro-card .meta {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: #728aa3;
+            border-top: 1px dashed #dbe2ec;
+            padding-top: 12px;
+        }
+
+        .intro-card .meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 右侧底部“更多” 装饰 */
+        .right-footer {
+            margin-top: 28px;
+            text-align: right;
+            font-size: 0.8rem;
+            color: #8ca1b7;
+            border-top: 1px solid #ecf0f6;
+            padding-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .right-footer a {
+            color: #2b5f8a;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 4px 14px;
+            border-radius: 60px;
+            background: #eef4fa;
+            transition: 0.1s;
+        }
+
+        .right-footer a:hover {
+            background: #dce6f2;
+            color: #1a3d60;
+        }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 768px) {
+            .nav-left {
+                flex: 0 0 100%;
+                border-right: none;
+                border-bottom: 1px solid #e9ecf0;
+                padding: 20px 18px;
+            }
+
+            .nav-right {
+                padding: 24px 20px;
+            }
+
+            .link-item {
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+
+            .right-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .intro-card {
+                padding: 16px 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-container {
+                border-radius: 16px;
+            }
+            .nav-left .category-title {
+                font-size: 0.7rem;
+            }
+            .right-header h2 {
+                font-size: 1.1rem;
+            }
+            .intro-card h3 {
+                font-size: 1rem;
+            }
+        }
+
+        /* 小工具：京东红点缀 */
+        .jd-red {
+            color: #e4393c;
+        }
+
+        .bg-soft-red {
+            background: #fce9e9;
+        }
+
+        /* 用于演示：模拟右侧内容切换（通过JS或锚点，这里使用纯CSS锚点+ :target 配合，但更好的做法是js，这里我们使用js实现无刷新切换） 
+           但为了符合“href”要求，链接使用 # 锚点，并用js捕获切换内容。 
+           同时保证链接可点击且不刷新页面，内容更新。 
+        */
+        .hidden-content {
+            display: none;
+        }
+
+        .visible-content {
+            display: block;
+        }
+
+        /* 过渡动效 */
+        .intro-content {
+            transition: opacity 0.2s ease;
         }
     </style>
 </head>
-
 <body>
-    <script>
-        // 页面加载完成后，将标题的透明度设置为1
-        window.onload = function () {
-            document.querySelector("h1").style.opacity = 1;
-        };
-    </script>
 
-    <h1 align="center"
-        style="color: rgb(0, 82, 255); opacity: 0; transition: opacity 0.5s ease-in-out;transition-delay:6s;">
-        曲阜师范大学-“启思智辅”：基于智能体的编程思维培养助学新模式</h1>
+<div class="nav-container">
+    <div class="nav-row">
 
-    <div align="center">
-        <p style="color: gray;font-size:13px;">曲阜师范大学计算机学院 2025-06-06 日照</p>
-        <video width="800" height="600" src="AIProgram.mp4" controls autoplay loop></video>
+        <!-- 左侧：分类链接 (多个页面超链接) -->
+        <div class="nav-left">
+            <div class="category-title">
+                📂 全部导航
+                <span>12</span>
+            </div>
+            <div class="link-list">
+                <!-- 使用 href="#page-xxx" 锚点，配合 JS 拦截切换内容，同时保留链接语义 -->
+                <a href="sign.html" class="link-item active" data-page="home">黑体电子签名</a>
+                <a href="edge.html" class="link-item" data-page="digital">简笔画</a>
+                <a href="bw.html" class="link-item" data-page="fashion">黑白照片</a>
+                <a href="#page-food" class="link-item" data-page="food">🍜 生鲜食品</a>
+                <a href="#page-book" class="link-item" data-page="book">📚 图书文创</a>
+                <a href="#page-sport" class="link-item" data-page="sport">⚽ 运动户外</a>
+                <a href="#page-home" class="link-item" data-page="home">🏷️ 品牌精选</a>
+            </div>
+            <!-- 左侧底部装饰 -->
+            <div style="margin-top: 30px; font-size: 0.7rem; color: #b0c3d4; border-top: 1px solid #e5eaf0; padding-top: 16px; text-align: center;">
+                <span>🛒 快捷导航 · 今日推荐</span>
+            </div>
+        </div>
+
+        <!-- 右侧：页面介绍 (根据左侧点击切换) -->
+        <div class="nav-right">
+            <div class="right-header">
+                <h2 id="pageTitle">🏠 首页 · 精选</h2>
+                <span class="sub-tag">🔥 热门</span>
+            </div>
+
+            <!-- 介绍内容容器，通过 data 属性切换显示 -->
+            <div id="introContainer" class="intro-content">
+                <!-- 首页介绍 (默认可见) -->
+                <div id="page-home" class="intro-card visible-content">
+                    <h3>📌 首页概览 <i>热门</i></h3>
+                    <p>欢迎来到导航中心！这里汇聚了数码、时尚、美食、图书等各类精选频道。点击左侧分类，快速探索你感兴趣的内容。</p>
+                    <div class="meta">
+                        <span>🕒 今日更新 12+</span>
+                        <span>👥 浏览 3.2k</span>
+                        <span>⭐ 推荐</span>
+                    </div>
+                </div>
+
+                <!-- 数码产品 -->
+                <div id="page-digital" class="intro-card hidden-content">
+                    <h3>📱 数码产品 <i>新品</i></h3>
+                    <p>最新智能手机、笔记本电脑、智能穿戴设备，以及各种黑科技配件。一站式了解数码前沿，享受科技生活。</p>
+                    <div class="meta">
+                        <span>📱 新品 8款</span>
+                        <span>⚡ 热销 1200+</span>
+                        <span>🔋 5G 专享</span>
+                    </div>
+                </div>
+
+                <!-- 时尚服饰 -->
+                <div id="page-fashion" class="intro-card hidden-content">
+                    <h3>👗 时尚服饰 <i>潮流</i></h3>
+                    <p>男女装、鞋包、配饰，国际大牌与独立设计师品牌汇聚。季节新款、联名系列，穿搭灵感源源不断。</p>
+                    <div class="meta">
+                        <span>🧥 春夏新款</span>
+                        <span>👠 大牌直降</span>
+                        <span>🛍️ 精选 200+</span>
+                    </div>
+                </div>
+
+                <!-- 生鲜食品 -->
+                <div id="page-food" class="intro-card hidden-content">
+                    <h3>🍜 生鲜食品 <i>新鲜</i></h3>
+                    <p>产地直送、时令果蔬、肉禽海鲜、进口零食。每日新鲜供应，品质保障，一键下单，快速到家。</p>
+                    <div class="meta">
+                        <span>🌿 有机认证</span>
+                        <span>🚚 次日达</span>
+                        <span>🍎 满减优惠</span>
+                    </div>
+                </div>
+
+                <!-- 图书文创 -->
+                <div id="page-book" class="intro-card hidden-content">
+                    <h3>📚 图书文创 <i>阅读</i></h3>
+                    <p>畅销书、文学经典、儿童绘本、艺术设计、文具手账。在书海中探索世界，用创意点亮生活。</p>
+                    <div class="meta">
+                        <span>📖 新书榜单</span>
+                        <span>✏️ 文具礼盒</span>
+                        <span>🎁 满赠活动</span>
+                    </div>
+                </div>
+
+                <!-- 运动户外 -->
+                <div id="page-sport" class="intro-card hidden-content">
+                    <h3>⚽ 运动户外 <i>活力</i></h3>
+                    <p>跑步、健身、露营、骑行、球类装备。专业品牌，高性价比，陪你挑战自我，享受户外乐趣。</p>
+                    <div class="meta">
+                        <span>🏃 跑步鞋</span>
+                        <span>⛺ 露营装备</span>
+                        <span>🎯 限时折扣</span>
+                    </div>
+                </div>
+
+                <!-- 品牌精选 (复用首页内容示例，也可以单独) 但为了展示，单独做一条 -->
+                <div id="page-brand" class="intro-card hidden-content">
+                    <h3>🏷️ 品牌精选 <i>独家</i></h3>
+                    <p>国际国内一线品牌官方直供，品质保证。数码、服饰、美妆、家居，品牌日专属优惠，不容错过。</p>
+                    <div class="meta">
+                        <span>🏷️ 大牌5折起</span>
+                        <span>🎉 品牌会员</span>
+                        <span>📦 正品保障</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧底部：辅助链接 -->
+            <div class="right-footer">
+                <span>📌 当前分类 · 内容持续更新</span>
+                <a href="#page-home" data-page="home" style="background:transparent; padding:0; color:#2f5f8a;">↻ 回到首页</a>
+            </div>
+        </div>
     </div>
-
-    <div align="center">
-        <p align="left" style="font-size: 19px; width:800px;">
-            简介：“启思智辅”是一款面向编程初学者的人工智能助学系统。该系统以插件形态深度集成于主流集成开发环境（IDE），旨在为高等教育阶段刚接触计算机编程的学生提供即时性、个性化的学习支持。系统运用先进的大语言模型技术，通过多轮启发式交互，辅助学生进行代码错误排查、逻辑梳理与算法理解。其核心目标在于，不仅解决学生在编程实践中遇到的具体问题，更着重于培养其计算思维、问题分析能力与自主学习习惯，从而有效提升编程基础教学的质量与学生的学习效能，为培养高素质创新型计算机人才奠定坚实基础。
-            <br><br>
-            示例：这段代码的功能是查找数组中的最大值，但原始代码存在错误。它初始化数组 `arr` 并假设第一个元素是最大值，通过 `sizeof` 计算数组大小。然而，在循环中，代码错误地每次都将当前元素赋值给
-            `max`，而未进行大小比较，导致逻辑错误。此外，循环中有多余的大括号。修正后的代码在循环中加入了 `if (arr[i] > max)` 判断，只有当当前元素大于 `max` 时才更新
-            `max`。最终，程序正确输出数组的最大值。
-        </p>
-
-        <h2 style="color: rgb(0, 82, 255);">❌ C语言代码错误标注：查找数组最大值</h2>
-
-        <div  class="code-block" >
-            <p align="left" >
-                #include <stdio.h><br><br>
-                int main() {<br>
-                int arr[] = {3, 5, 2, 8, 1, 9};<br>
-                int max = arr[0]; // 假设第一个元素是最大的<br>
-                int size = sizeof(arr) / sizeof(arr[0]); // 计算数组的大小<br><br>
-                <span class="error-line">for (int i = 1; i < size; i++) {<br> {<br> max = arr[i]; // 更新最大值<br> }<br>
-                        }</span><br><br>
-                printf("最大值是: %d\\n", max);<br>
-                return 0;<br>
-                }
-            </p>
-        </div>
-
-        <div align="left" class="explanation">
-            <strong>🔍 错误说明：</strong><br>
-            - 在 for 循环中，缺少了判断语句 <code>if (arr[i] > max)</code>。<br>
-            - 当前代码每次循环都会无条件执行 <code>max = arr[i]</code>，最终导致 <code>max</code> 被赋值为数组最后一个元素（虽然结果可能碰巧正确，但逻辑错误）。<br>
-            - 多余的大括号 <code>{}</code> 可以删除。
-        </div>
-
-        <div align="left" class="correct-code">
-            #include <stdio.h><br><br>
-                int main() {<br>
-                int arr[] = {3, 5, 2, 8, 1, 9};<br>
-                int max = arr[0];<br>
-                int size = sizeof(arr) / sizeof(arr[0]);<br><br>
-                for (int i = 1; i < size; i++) {<br>
-                    if (arr[i] > max) {<br>
-                    max = arr[i]; // 只有当前元素更大时才更新<br>
-                    }<br>
-                    }<br><br>
-                    printf("最大值是: %d\\n", max);<br>
-                    return 0;<br><br>
-                    }
-        </div>
-        <div class="divMap">
-            <script type="text/javascript" id="clstr_globe"
-                src="//clustrmaps.com/globe.js?d=c2NSlzITcK7A_NJ0kZTmD_XnPwf6tORbF_bbTvp7c0w"></script>
-        </div>
-
-    </div>
- <div align="center">
-    <p class="line"><br>版权所有©曲阜师范大学</p>
 </div>
-</body>
 
+<!-- 交互 JS：实现点击左侧链接切换右侧内容，同时高亮左侧菜单，完全无刷新 -->
+<script>
+    (function() {
+        // 获取所有左侧链接
+        const linkItems = document.querySelectorAll('.link-item');
+        // 获取所有右侧内容卡片 (通过 id 匹配)
+        const contentCards = document.querySelectorAll('.intro-card');
+        // 右侧标题元素
+        const pageTitle = document.getElementById('pageTitle');
+
+        // 映射关系: data-page 与 标题文本 (可动态)
+        const titleMap = {
+            'home': '🏠 首页 · 精选',
+            'digital': '📱 数码产品 · 前沿',
+            'fashion': '👗 时尚服饰 · 潮流',
+            'food': '🍜 生鲜食品 · 新鲜',
+            'book': '📚 图书文创 · 阅读',
+            'sport': '⚽ 运动户外 · 活力',
+            'brand': '🏷️ 品牌精选 · 独家'
+        };
+
+        // 切换内容的函数
+        function switchPage(pageId) {
+            // 1. 隐藏所有内容卡片
+            contentCards.forEach(card => {
+                card.classList.add('hidden-content');
+                card.classList.remove('visible-content');
+            });
+
+            // 2. 显示目标卡片 (通过 id)
+            const targetCard = document.getElementById('page-' + pageId);
+            if (targetCard) {
+                targetCard.classList.remove('hidden-content');
+                targetCard.classList.add('visible-content');
+            } else {
+                // fallback: 如果找不到对应卡片，显示首页
+                const homeCard = document.getElementById('page-home');
+                if (homeCard) {
+                    homeCard.classList.remove('hidden-content');
+                    homeCard.classList.add('visible-content');
+                }
+            }
+
+            // 3. 更新右侧标题
+            if (titleMap[pageId]) {
+                pageTitle.textContent = titleMap[pageId];
+            } else {
+                pageTitle.textContent = '📌 导航 · ' + pageId;
+            }
+
+            // 4. 左侧链接高亮切换
+            linkItems.forEach(link => {
+                link.classList.remove('active');
+                // 通过 data-page 匹配
+                if (link.getAttribute('data-page') === pageId) {
+                    link.classList.add('active');
+                }
+            });
+
+            // 5. 更新地址栏 hash (不触发滚动)
+            if (history.pushState) {
+                history.pushState(null, '', '#page-' + pageId);
+            }
+        }
+
+        // 绑定点击事件到每个左侧链接
+        linkItems.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();  // 阻止默认锚点跳转
+                const page = this.getAttribute('data-page');
+                if (page) {
+                    switchPage(page);
+                } else {
+                    // 若没有 data-page，则使用 href 中的 page 名称 (容错)
+                    const href = this.getAttribute('href');
+                    if (href && href.startsWith('#page-')) {
+                        const pageFromHref = href.replace('#page-', '');
+                        switchPage(pageFromHref);
+                    } else {
+                        // 默认首页
+                        switchPage('home');
+                    }
+                }
+            });
+        });
+
+        // 处理页面加载时的 hash (直接访问 #page-xxx)
+        function handleHashOnLoad() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#page-')) {
+                const page = hash.replace('#page-', '');
+                // 等待DOM完全加载后切换
+                setTimeout(() => {
+                    switchPage(page);
+                }, 10);
+            } else {
+                // 默认高亮首页，保证 active 状态
+                const defaultLink = document.querySelector('.link-item[data-page="home"]');
+                if (defaultLink) {
+                    linkItems.forEach(l => l.classList.remove('active'));
+                    defaultLink.classList.add('active');
+                }
+            }
+        }
+
+        // 右侧底部 “回到首页” 链接点击
+        const backHomeLink = document.querySelector('.right-footer a[data-page="home"]');
+        if (backHomeLink) {
+            backHomeLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                switchPage('home');
+            });
+        }
+
+        // 初始化
+        handleHashOnLoad();
+
+        // 监听 hashchange 事件 (当用户手动修改地址栏时)
+        window.addEventListener('hashchange', function() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#page-')) {
+                const page = hash.replace('#page-', '');
+                switchPage(page);
+            }
+        });
+
+        console.log('✅ 导航栏交互已启动 (左侧链接切换右侧内容)');
+    })();
+</script>
+
+<!-- 额外说明：纯div+css+js实现，无外部库，简洁高效 -->
+</body>
 </html>
