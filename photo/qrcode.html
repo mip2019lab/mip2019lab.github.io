@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>二维码生成器 | 在线生成并下载</title>
+    <!-- 使用稳定高效的 qrcode.js 库 (https://github.com/davidshimjs/qrcodejs) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- 可选: 为兼容性引入 html2canvas 以便高质量截图下载，但为了轻量和原生感，也可直接使用 canvas 提取，但 qrcodejs 默认生成的是 div+table 结构，
+         因此为了完美下载为图片，我们使用 html2canvas 将二维码区域转为图片，确保下载内容与显示完全一致，并支持高分辨率输出。
+         同时为了减少依赖，也可以使用原生 canvas 绘制，但是 qrcodejs 简洁且不依赖复杂生态，我们额外加 html2canvas 实现“所见即所得”下载。
+         注: html2canvas 约 40KB，现代网络可接受，提供最佳用户体验。 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f7fc 0%, #e9eef4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 20px;
+        }
+
+        .card {
+            max-width: 560px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(0px);
+            border-radius: 48px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 8px 18px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .header {
+            background: #ffffff;
+            padding: 28px 32px 12px 32px;
+            text-align: center;
+            border-bottom: 1px solid #eef2f8;
+        }
+
+        .header h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e2b3c, #2c4c6e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .header p {
+            color: #5b6f82;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        .content {
+            padding: 32px 32px 40px;
+        }
+
+        .input-group {
+            margin-bottom: 28px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: #1f3a4b;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 32px;
+            background: white;
+            transition: all 0.2s;
+            outline: none;
+            font-family: monospace;
+            color: #0f2b3b;
+        }
+
+        .input-field:focus {
+            border-color: #2c7cb6;
+            box-shadow: 0 0 0 3px rgba(44, 124, 182, 0.2);
+        }
+
+        .input-field::placeholder {
+            color: #b7c4d0;
+            font-family: inherit;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 32px;
+            justify-content: center;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 130px;
+            padding: 12px 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 80px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #f0f4fa;
+            color: #1f4662;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-primary {
+            background: #2c7cb6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(44,124,182,0.3);
+        }
+
+        .btn-primary:hover {
+            background: #1f6190;
+            transform: scale(1.02);
+            box-shadow: 0 8px 18px rgba(44,124,182,0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1.5px solid #cbdde9;
+            color: #2c7cb6;
+        }
+
+        .btn-outline:hover {
+            background: #eef5fc;
+            border-color: #2c7cb6;
+            transform: scale(1.02);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .qrcode-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #ffffff;
+            padding: 28px 20px;
+            border-radius: 40px;
+            box-shadow: inset 0 1px 4px #00000008, 0 12px 24px -16px rgba(0, 0, 0, 0.2);
+            margin-top: 12px;
+            border: 1px solid #eef3fc;
+        }
+
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        /* qrcodejs 生成的 table 以及内部内容样式美观 */
+        #qrcode img,
+        #qrcode table,
+        #qrcode canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 针对 table 结构设置居中 */
+        #qrcode table {
+            margin: 0 auto;
+        }
+
+        .info-tip {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #8ea1b2;
+            margin-top: 20px;
+            background: #f8fafd;
+            padding: 10px 16px;
+            border-radius: 40px;
+            display: inline-block;
+            width: auto;
+        }
+
+        .footer-note {
+            text-align: center;
+            border-top: 1px solid #eef2f8;
+            padding: 18px 32px;
+            font-size: 0.7rem;
+            color: #8da0af;
+            background: #ffffffd9;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                border-radius: 32px;
+            }
+            .content {
+                padding: 24px 20px 32px;
+            }
+            .btn {
+                min-width: 110px;
+                padding: 10px 6px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <h1>✨ QR 精灵</h1>
+        <p>输入文本或链接 · 瞬间生成二维码</p>
+    </div>
+    <div class="content">
+        <div class="input-group">
+            <label>📝 内容 / 网址</label>
+            <input type="text" id="textInput" class="input-field" placeholder="例如: https://www.example.com 或 任何文本" autocomplete="off">
+        </div>
+
+        <div class="button-row">
+            <button id="generateBtn" class="btn btn-primary">✨ 生成二维码</button>
+            <button id="downloadBtn" class="btn btn-outline">⬇️ 下载图片 (PNG)</button>
+        </div>
+
+        <div class="qrcode-container">
+            <div id="qrcode"></div>
+        </div>
+        <div style="display: flex; justify-content: center; margin-top: 16px;">
+            <div class="info-tip">
+                💡 提示：点击生成后显示二维码，下载将保存为高清PNG
+            </div>
+        </div>
+    </div>
+    <div class="footer-note">
+        🔒 纯前端生成 · 数据安全 · 即输即用
+    </div>
+</div>
+
+<script>
+    // 获取 DOM 元素
+    const textInput = document.getElementById('textInput');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const qrcodeContainer = document.getElementById('qrcode');
+
+    // 全局存储当前的二维码对象实例 (qrcodejs 实例)
+    let currentQR = null;
+
+    // 辅助函数: 清空容器并重置二维码对象
+    function clearQR() {
+        if (currentQR) {
+            // 清空 qrcode 内部 html, qrcodejs 的 clear 方法并不是标准API, 直接清空 innerHTML 并置空实例
+            qrcodeContainer.innerHTML = '';
+            currentQR = null;
+        } else {
+            qrcodeContainer.innerHTML = '';
+        }
+    }
+
+    // 生成二维码的核心函数
+    function generateQRCode(text) {
+        // 去除首尾空格
+        const finalText = text ? text.trim() : '';
+        if (!finalText) {
+            // 如果输入为空，给出友好提示并清空
+            clearQR();
+            // 在容器里显示提示信息 (美观)
+            const tipDiv = document.createElement('div');
+            tipDiv.style.cssText = 'display: flex; align-items:center; justify-content:center; background:#fafcff; color:#809aad; font-size:0.9rem; padding:40px 20px; border-radius:28px; text-align:center;';
+            tipDiv.innerText = '💬 请输入文字或链接，再点击生成';
+            qrcodeContainer.appendChild(tipDiv);
+            return false;
+        }
+
+        // 边界检测：过长文本可能会导致二维码复杂但依旧可以生成，qrcodejs 支持最大约 2KB 左右。但做友好截断提示不必要，由用户决定。
+        // 先清空之前的二维码
+        clearQR();
+
+        try {
+            // 使用 qrcodejs 库: 参数 (容器, 配置)
+            // 注意：qrcodejs 的配置选项，宽度、高度、颜色等，增强视觉效果
+            currentQR = new QRCode(qrcodeContainer, {
+                text: finalText,
+                width: 240,               // 二维码宽度 (px)
+                height: 240,              // 高度
+                colorDark: "#1a2c3e",     // 深色模块颜色 (优雅藏青)
+                colorLight: "#ffffff",    // 浅色背景
+                correctLevel: QRCode.CorrectLevel.H  // 高纠错级别，确保部分污损可读
+            });
+            return true;
+        } catch (error) {
+            console.error("生成二维码失败: ", error);
+            // 清空并显示错误信息
+            clearQR();
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'color:#c7452c; background:#fff4f0; padding:30px 12px; border-radius:28px; text-align:center; font-size:0.85rem;';
+            errorDiv.innerText = '❌ 无法生成二维码，内容可能过长或不合法。请尝试缩短文字。';
+            qrcodeContainer.appendChild(errorDiv);
+            return false;
+        }
+    }
+
+    // 下载二维码图片 (使用 html2canvas 将 #qrcode 区域转为图片，保证高质量和视觉一致性)
+    // 注意：qrcodejs 可能生成 table 结构，直接截图完全保留用户所见样式（圆角、阴影等）
+    async function downloadQRAsImage() {
+        // 检查当前二维码容器内是否有真实的二维码内容（而不是占位文本）
+        if (!currentQR) {
+            // 可能没有生成任何二维码，或者容器为空/只有占位提示
+            const containerContent = qrcodeContainer.innerHTML;
+            if (!containerContent || containerContent.includes('请输入文字') || containerContent.includes('无法生成')) {
+                alert('⚠️ 暂无有效二维码，请先输入内容并点击“生成二维码”。');
+                return;
+            }
+            // 额外情况：用户直接点击下载但没有生成任何有效图像，但有可能存在currentQR为null但有DOM img或table？实际上clear后如果有内容但实例丢失也会导致截图空白
+            // 二次判断：若没有实例但容器内有正常的 table/img 也可尝试截图，但为了稳健建议提示重新生成
+            const hasQRCodeVisual = document.querySelector('#qrcode table, #qrcode img, #qrcode canvas');
+            if (!hasQRCodeVisual) {
+                alert('📢 没有检测到二维码图形，请先点击“生成二维码”。');
+                return;
+            }
+        }
+
+        // 获取二维码根容器
+        const targetElement = document.getElementById('qrcode');
+        if (!targetElement || targetElement.children.length === 0 || targetElement.innerText.includes('请输入文字')) {
+            alert('二维码区域为空，请先生成二维码。');
+            return;
+        }
+
+        // 显示下载中提示 (避免多次点击)
+        const originalText = downloadBtn.innerText;
+        downloadBtn.innerText = '⏳ 生成中...';
+        downloadBtn.disabled = true;
+
+        try {
+            // 使用 html2canvas 渲染指定区域，提高图片质量
+            const canvas = await html2canvas(targetElement, {
+                scale: 3,               // 高清缩放 (3倍分辨率)
+                backgroundColor: '#ffffff',
+                logging: false,
+                useCORS: false,         // 本地无跨域问题
+                allowTaint: false
+            });
+            
+            // 创建图片链接
+            const imageData = canvas.toDataURL('image/png');
+            // 创建一个临时链接并触发下载
+            const link = document.createElement('a');
+            const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+            const fileName = `qrcode_${timestamp}.png`;
+            link.href = imageData;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // 可选: 成功简短反馈
+            downloadBtn.innerText = '✓ 已下载!';
+            setTimeout(() => {
+                if (downloadBtn) downloadBtn.innerText = originalText;
+            }, 1500);
+        } catch (error) {
+            console.error('截图下载失败: ', error);
+            alert('下载失败，可尝试刷新页面或检查网络。\n' + (error.message || '未知错误'));
+            downloadBtn.innerText = originalText;
+        } finally {
+            downloadBtn.disabled = false;
+        }
+    }
+
+    // 生成按钮事件处理器
+    function onGenerate() {
+        const rawText = textInput.value;
+        if (!rawText || rawText.trim() === '') {
+            // 提示并清空占位提示
+            clearQR();
+            const tipDiv = document.createElement('div');
+            tipDiv.style.cssText = 'display: flex; align-items:center; justify-content:center; background:#fafcff; color:#809aad; font-size:0.9rem; padding:40px 20px; border-radius:28px; text-align:center;';
+            tipDiv.innerText = '✏️ 请在输入框填写内容后生成二维码';
+            qrcodeContainer.appendChild(tipDiv);
+            // 轻提醒
+            textInput.focus();
+            return;
+        }
+        generateQRCode(rawText);
+    }
+
+    // 监听输入框支持回车生成
+    textInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            onGenerate();
+        }
+    });
+
+    // 绑定按钮事件
+    generateBtn.addEventListener('click', onGenerate);
+    downloadBtn.addEventListener('click', downloadQRAsImage);
+
+    // 初始化时展示一个默认示例二维码（可选：让用户理解如何使用，生动展示）
+    // 为了更好的初次体验，生成一个默认二维码: 示例文本 “欢迎使用QR精灵 | 输入任何文字试试~”
+    // 注意: 确保页面加载时二维码友好展示，但不干扰后续用户输入生成
+    function initDefaultQR() {
+        const defaultText = "https://qrcode.demo · 扫描即用";
+        // 清空并生成默认
+        clearQR();
+        try {
+            currentQR = new QRCode(qrcodeContainer, {
+                text: defaultText,
+                width: 220,
+                height: 220,
+                colorDark: "#2c7cb6",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+            // 预填充输入框内容，便于用户直接点击生成新内容（但不强制，仅作为引导）
+            textInput.value = "https://www.qfnu.edu.cn";
+            // 添加柔和提示在占位符展示: placeholder已存在，保持无侵入
+        } catch (e) {
+            console.warn("初始化默认二维码轻微失败", e);
+            qrcodeContainer.innerHTML = '<div style="padding:40px; text-align:center;">✨ 欢迎使用，输入文字生成二维码</div>';
+        }
+    }
+    
+    // 执行初始化展示 (为了首屏非空，并且演示下载可用)
+    initDefaultQR();
+
+    // 额外优化：当点击下载时，若内容为初始或新生成的都能正确截图，增强逻辑
+    // 添加监听确保下载前再次检查是否有最新生成的二维码图片（以防用户手动清空输入后未生成直接下载，已经被alert拦截）
+    // 同时, 在某些极端情况 html2canvas 针对 table 渲染可能存在细小偏移，但整体完美，备用。
+    // 由于下载时截图包括二维码容器的样式背景圆角阴影等都会忠实保留，提供优质体验。
+</script>
+</body>
+</html>
