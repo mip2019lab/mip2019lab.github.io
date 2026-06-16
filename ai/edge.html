@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>边缘提取工具 - 图像转简笔画效果</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .card {
+            max-width: 1400px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            padding: 24px 28px 32px 28px;
+            transition: all 0.2s;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin: 0 0 0.25rem 0;
+            letter-spacing: -0.3px;
+        }
+
+        .sub {
+            color: #475569;
+            border-left: 4px solid #f97316;
+            padding-left: 16px;
+            margin-bottom: 28px;
+            font-weight: 450;
+            font-size: 0.95rem;
+        }
+
+        .workspace {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            justify-content: center;
+        }
+
+        .panel {
+            flex: 1;
+            min-width: 300px;
+            background: #ffffffdd;
+            backdrop-filter: blur(4px);
+            border-radius: 1.5rem;
+            padding: 20px 18px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .panel h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 0;
+            margin-bottom: 18px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .canvas-container {
+            background: #f8fafc;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 1px 4px #0001, 0 1px 2px white;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 16px;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+            background: #fff;
+            display: block;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+
+        .info-area {
+            background: #f1f5f9;
+            border-radius: 1rem;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            color: #1e293b;
+            text-align: center;
+            margin: 12px 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        button {
+            background: #1e293b;
+            border: none;
+            color: white;
+            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button.primary {
+            background: #f97316;
+            box-shadow: 0 4px 8px rgba(249, 115, 22, 0.3);
+        }
+
+        button.primary:hover {
+            background: #ea580c;
+            transform: scale(0.97);
+        }
+
+        button.outline {
+            background: transparent;
+            border: 1.5px solid #f97316;
+            color: #f97316;
+            box-shadow: none;
+        }
+
+        button.outline:hover {
+            background: #fff7ed;
+        }
+
+        button.danger {
+            background: #475569;
+        }
+
+        button.danger:hover {
+            background: #334155;
+        }
+
+        .param-group {
+            background: #f1f5f9;
+            border-radius: 1.2rem;
+            padding: 12px 16px;
+            margin: 18px 0 10px;
+        }
+
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .param-row label {
+            font-weight: 500;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        input[type="range"] {
+            flex: 2;
+            min-width: 160px;
+            height: 5px;
+            border-radius: 10px;
+            background: #cbd5e1;
+        }
+
+        .val-display {
+            background: #1e293b;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .file-label {
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #cbd5e1;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.1s;
+        }
+
+        .file-label:hover {
+            background: #e2e8f0;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .status {
+            font-size: 0.75rem;
+            color: #f97316;
+            background: #fff7ed;
+            border-radius: 40px;
+            padding: 6px 12px;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        hr {
+            margin: 16px 0;
+            border: none;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        footer {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        @media (max-width: 780px) {
+            .card {
+                padding: 18px;
+            }
+            .panel {
+                padding: 14px;
+            }
+            button {
+                padding: 6px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>✍️ 边缘提取 · 简笔画效果</h1>
+    <div class="sub">基于Sobel算子 + 自适应阈值 | 轻松将照片/图像转为手绘线稿</div>
+
+    <div class="workspace">
+        <!-- 左侧：原图区域 -->
+        <div class="panel">
+            <h2>📷 原始图像</h2>
+            <div class="canvas-container">
+                <canvas id="originalCanvas" width="550" height="400" style="width:100%; height:auto; max-width:550px; aspect-ratio:550/400"></canvas>
+            </div>
+            <div class="controls">
+                <label class="file-label">
+                    📁 上传图片
+                    <input type="file" id="uploadInput" accept="image/jpeg, image/png, image/webp, image/bmp">
+                </label>
+                <button id="resetOriginalBtn" class="outline">🔄 重置示例</button>
+            </div>
+            <div class="info-area" id="originalInfo">
+                💡 支持 JPG/PNG/WebP，拖拽或点击上传
+            </div>
+        </div>
+
+        <!-- 右侧：边缘提取结果 (简笔画效果) -->
+        <div class="panel">
+            <h2>🎨 边缘线稿 (简笔画)</h2>
+            <div class="canvas-container">
+                <canvas id="edgeCanvas" width="550" height="400" style="width:100%; height:auto; max-width:550px; aspect-ratio:550/400"></canvas>
+            </div>
+            <div class="param-group">
+                <div class="param-row">
+                    <label>🎚️ 边缘敏感度 (越低线条越丰富)</label>
+                    <input type="range" id="edgeThreshold" min="10" max="200" value="45" step="1">
+                    <span class="val-display" id="thresholdValue">45</span>
+                </div>
+                <div class="param-row">
+                    <label>✒️ 线条粗细 (膨胀/腐蚀)</label>
+                    <input type="range" id="lineWidth" min="0" max="3" value="1" step="1">
+                    <span class="val-display" id="widthValue">1</span>
+                </div>
+                <div class="param-row">
+                    <label>⚫ 背景风格</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="bgWhiteBtn" style="background:#f1f5f9; color:#1e293b; font-size:0.75rem; padding:4px 12px;">白纸黑线</button>
+                        <button id="bgBlackBtn" style="background:#1e293b; color:white; font-size:0.75rem; padding:4px 12px;">黑板白线</button>
+                    </div>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="applyEdgeBtn" class="primary">✨ 提取边缘</button>
+                <button id="downloadEdgeBtn" class="outline">💾 下载线稿</button>
+                <button id="invertBtn" class="outline">🔄 反色线稿</button>
+            </div>
+            <div class="status" id="edgeStatus">
+                ✅ 调节参数后点击「提取边缘」生成简笔画
+            </div>
+        </div>
+    </div>
+    <footer>
+        🧠 算法原理：Sobel梯度检测 + 高斯平滑 + 非极大值抑制风格 + 动态阈值 | 可调线条粗细、背景颜色
+    </footer>
+</div>
+
+<script>
+    (function () {
+        // ----- DOM 元素 -----
+        const originalCanvas = document.getElementById('originalCanvas');
+        const edgeCanvas = document.getElementById('edgeCanvas');
+        const ctxOrig = originalCanvas.getContext('2d');
+        const ctxEdge = edgeCanvas.getContext('2d');
+
+        const uploadInput = document.getElementById('uploadInput');
+        const resetBtn = document.getElementById('resetOriginalBtn');
+        const edgeThresholdSlider = document.getElementById('edgeThreshold');
+        const thresholdValueSpan = document.getElementById('thresholdValue');
+        const lineWidthSlider = document.getElementById('lineWidth');
+        const widthValueSpan = document.getElementById('widthValue');
+        const applyBtn = document.getElementById('applyEdgeBtn');
+        const downloadBtn = document.getElementById('downloadEdgeBtn');
+        const invertBtn = document.getElementById('invertBtn');
+        const bgWhiteBtn = document.getElementById('bgWhiteBtn');
+        const bgBlackBtn = document.getElementById('bgBlackBtn');
+        const originalInfo = document.getElementById('originalInfo');
+        const edgeStatus = document.getElementById('edgeStatus');
+
+        // 全局图像数据
+        let originalImageData = null;      // 原始图像RGBA
+        let currentEdgeImageData = null;   // 当前的边缘线稿 ImageData
+        let imageLoaded = false;
+        let currentBgMode = 'white';        // 'white' 或 'black'
+
+        // 默认示例图 (带有明显轮廓的图案)
+        function drawDefaultExample() {
+            const w = 550, h = 400;
+            originalCanvas.width = w;
+            originalCanvas.height = h;
+            edgeCanvas.width = w;
+            edgeCanvas.height = h;
+
+            ctxOrig.clearRect(0, 0, w, h);
+            // 背景淡青色
+            ctxOrig.fillStyle = "#d9f0f7";
+            ctxOrig.fillRect(0, 0, w, h);
+            // 绘制一只猫咪轮廓风格的简笔画样本（丰富的边缘）
+            ctxOrig.fillStyle = "#f4a261";
+            ctxOrig.beginPath();
+            ctxOrig.ellipse(200, 180, 70, 60, 0, 0, Math.PI * 2);
+            ctxOrig.fill();
+            ctxOrig.fillStyle = "#e76f51";
+            ctxOrig.beginPath();
+            ctxOrig.ellipse(200, 210, 45, 40, 0, 0, Math.PI * 2);
+            ctxOrig.fill();
+            ctxOrig.fillStyle = "#2a9d8f";
+            ctxOrig.fillRect(320, 150, 100, 80);
+            ctxOrig.fillStyle = "#e9c46a";
+            ctxOrig.beginPath();
+            ctxOrig.moveTo(450, 250);
+            ctxOrig.lineTo(500, 150);
+            ctxOrig.lineTo(530, 280);
+            ctxOrig.fill();
+            // 纹理细节
+            ctxOrig.fillStyle = "#000000";
+            ctxOrig.font = "bold 28px system-ui";
+            ctxOrig.fillText("🐱", 150, 130);
+            ctxOrig.fillStyle = "#283618";
+            for (let i = 0; i < 600; i++) {
+                ctxOrig.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
+            }
+            // 存储原图数据
+            originalImageData = ctxOrig.getImageData(0, 0, w, h);
+            imageLoaded = true;
+            originalInfo.innerHTML = '🎨 当前为内置示例图 (猫咪+几何纹理) — 可上传真实照片体验边缘提取';
+            // 执行一次边缘检测（默认参数）
+            computeAndRenderEdges(parseInt(edgeThresholdSlider.value), parseInt(lineWidthSlider.value), currentBgMode);
+        }
+
+        // ---------- 图像预处理：转为灰度图 (Uint8ClampedArray 宽度高度) ----------
+        function getGrayscaleMatrix(imgData) {
+            const width = imgData.width;
+            const height = imgData.height;
+            const data = imgData.data;
+            const gray = new Uint8ClampedArray(width * height);
+            for (let i = 0; i < width * height; i++) {
+                const r = data[i * 4];
+                const g = data[i * 4 + 1];
+                const b = data[i * 4 + 2];
+                gray[i] = Math.floor(0.299 * r + 0.587 * g + 0.114 * b);
+            }
+            return { gray, width, height };
+        }
+
+        // 简单的 3x3 高斯模糊 (平滑，减少噪点边缘)
+        function gaussianBlur(grayMatrix, width, height) {
+            const result = new Uint8ClampedArray(width * height);
+            const kernel = [1 / 16, 2 / 16, 1 / 16, 2 / 16, 4 / 16, 2 / 16, 1 / 16, 2 / 16, 1 / 16];
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let sum = 0;
+                    let idx = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const px = (y + ky) * width + (x + kx);
+                            sum += grayMatrix[px] * kernel[idx++];
+                        }
+                    }
+                    result[y * width + x] = Math.min(255, Math.max(0, Math.floor(sum)));
+                }
+            }
+            // 边缘填充原值
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    if (y === 0 || y === height - 1 || x === 0 || x === width - 1) {
+                        result[y * width + x] = grayMatrix[y * width + x];
+                    }
+                }
+            }
+            return result;
+        }
+
+        // Sobel 边缘检测 (返回梯度幅值矩阵 0-255)
+        function sobelEdgeDetection(blurredGray, width, height) {
+            const gradient = new Uint8ClampedArray(width * height);
+            // Sobel 核
+            const sobelX = [
+                [-1, 0, 1],
+                [-2, 0, 2],
+                [-1, 0, 1]
+            ];
+            const sobelY = [
+                [-1, -2, -1],
+                [0, 0, 0],
+                [1, 2, 1]
+            ];
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let gx = 0, gy = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const pixel = blurredGray[(y + ky) * width + (x + kx)];
+                            gx += pixel * sobelX[ky + 1][kx + 1];
+                            gy += pixel * sobelY[ky + 1][kx + 1];
+                        }
+                    }
+                    const mag = Math.min(255, Math.floor(Math.sqrt(gx * gx + gy * gy)));
+                    gradient[y * width + x] = mag;
+                }
+            }
+            return gradient;
+        }
+
+        // 阈值处理 + 可选线条粗细模拟 (膨胀效果：使得边缘线加粗)
+        function thresholdAndThicken(edgeGrad, width, height, thresholdVal, thickLevel, bgMode) {
+            // 先二值化: 大于阈值为边缘（线条），否则背景
+            const binary = new Uint8ClampedArray(width * height);
+            for (let i = 0; i < width * height; i++) {
+                binary[i] = (edgeGrad[i] >= thresholdVal) ? 1 : 0;   // 1代表线条(黑)，0代表背景(白)
+            }
+            // 线条加粗: 简单的膨胀 (dilate) thickLevel 次
+            let thickMap = new Uint8ClampedArray(binary);
+            if (thickLevel > 0) {
+                for (let t = 0; t < thickLevel; t++) {
+                    const dilated = new Uint8ClampedArray(width * height);
+                    for (let y = 1; y < height - 1; y++) {
+                        for (let x = 1; x < width - 1; x++) {
+                            let maxVal = 0;
+                            for (let ky = -1; ky <= 1; ky++) {
+                                for (let kx = -1; kx <= 1; kx++) {
+                                    maxVal = Math.max(maxVal, thickMap[(y + ky) * width + (x + kx)]);
+                                }
+                            }
+                            dilated[y * width + x] = maxVal;
+                        }
+                    }
+                    thickMap = dilated;
+                }
+            }
+            // 生成最终 ImageData (根据背景模式)
+            const outImgData = new ImageData(width, height);
+            const outData = outImgData.data;
+            const isWhiteBg = (bgMode === 'white'); // 白底黑线，还是黑底白线
+            for (let i = 0; i < width * height; i++) {
+                const isEdge = thickMap[i] === 1;
+                let r, g, b;
+                if (isWhiteBg) {
+                    // 白底黑线：边缘是黑色，背景白色
+                    if (isEdge) { r = 0; g = 0; b = 0; }
+                    else { r = 255; g = 255; b = 255; }
+                } else {
+                    // 黑底白线：边缘是白色，背景黑色
+                    if (isEdge) { r = 255; g = 255; b = 255; }
+                    else { r = 0; g = 0; b = 0; }
+                }
+                outData[i * 4] = r;
+                outData[i * 4 + 1] = g;
+                outData[i * 4 + 2] = b;
+                outData[i * 4 + 3] = 255;
+            }
+            return outImgData;
+        }
+
+        // 边缘提取主流程 (高斯平滑 + Sobel + 阈值+加粗)
+        function extractEdges(imgData, thresholdVal, thickLevel, bgMode) {
+            if (!imgData) return null;
+            const { gray, width, height } = getGrayscaleMatrix(imgData);
+            // 可选轻度高斯滤波降噪
+            const blurred = gaussianBlur(gray, width, height);
+            const edgeGrad = sobelEdgeDetection(blurred, width, height);
+            const result = thresholdAndThicken(edgeGrad, width, height, thresholdVal, thickLevel, bgMode);
+            return result;
+        }
+
+        // 渲染边缘并存储
+        function computeAndRenderEdges(thresholdVal, thickLevel, bgMode) {
+            if (!originalImageData) {
+                ctxEdge.clearRect(0, 0, edgeCanvas.width, edgeCanvas.height);
+                ctxEdge.fillStyle = "#f1f5f9";
+                ctxEdge.fillRect(0, 0, edgeCanvas.width, edgeCanvas.height);
+                ctxEdge.fillStyle = "#64748b";
+                ctxEdge.font = "14px system-ui";
+                ctxEdge.fillText("无图片数据，请上传或重置", 30, 50);
+                currentEdgeImageData = null;
+                return false;
+            }
+
+            const edgeImg = extractEdges(originalImageData, thresholdVal, thickLevel, bgMode);
+            if (edgeImg) {
+                ctxEdge.putImageData(edgeImg, 0, 0);
+                currentEdgeImageData = edgeImg;
+                edgeStatus.innerHTML = `✨ 边缘提取完成 | 阈值=${thresholdVal} 线条粗细=${thickLevel} 背景=${bgMode === 'white' ? '白纸黑线' : '黑板白线'}`;
+                return true;
+            }
+            return false;
+        }
+
+        // 反色功能（适用于线稿）
+        function invertLineArt() {
+            if (!currentEdgeImageData && originalImageData) {
+                const th = parseInt(edgeThresholdSlider.value, 10);
+                const lw = parseInt(lineWidthSlider.value, 10);
+                computeAndRenderEdges(th, lw, currentBgMode);
+            }
+            if (!currentEdgeImageData) {
+                alert("请先提取边缘线稿");
+                return;
+            }
+            const invData = new ImageData(currentEdgeImageData.width, currentEdgeImageData.height);
+            const src = currentEdgeImageData.data;
+            const dst = invData.data;
+            for (let i = 0; i < src.length; i += 4) {
+                dst[i] = 255 - src[i];
+                dst[i + 1] = 255 - src[i + 1];
+                dst[i + 2] = 255 - src[i + 2];
+                dst[i + 3] = 255;
+            }
+            ctxEdge.putImageData(invData, 0, 0);
+            currentEdgeImageData = invData;
+            edgeStatus.innerHTML = `🔄 已反色线稿 (可再次反色恢复)`;
+        }
+
+        // 下载线稿
+        function downloadEdge() {
+            if (!currentEdgeImageData) {
+                if (originalImageData) {
+                    const th = parseInt(edgeThresholdSlider.value, 10);
+                    const lw = parseInt(lineWidthSlider.value, 10);
+                    computeAndRenderEdges(th, lw, currentBgMode);
+                } else {
+                    alert("没有可用的线稿图片，请上传或重置");
+                    return;
+                }
+            }
+            try {
+                const link = document.createElement('a');
+                link.download = 'sketch_edge.png';
+                link.href = edgeCanvas.toDataURL('image/png');
+                link.click();
+                edgeStatus.innerHTML = '📎 线稿下载成功！';
+                setTimeout(() => { edgeStatus.innerHTML = '⚡ 可继续调节参数提取边缘'; }, 1500);
+            } catch (e) {
+                alert("下载失败，可尝试截图");
+            }
+        }
+
+        // 从文件加载图片
+        function loadImageFromFile(file) {
+            if (!file || !file.type.match('image.*')) {
+                alert("请上传有效的图片");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const maxW = 550, maxH = 400;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxW) {
+                        height = (height * maxW) / width;
+                        width = maxW;
+                    }
+                    if (height > maxH) {
+                        width = (width * maxH) / height;
+                        height = maxH;
+                    }
+                    width = Math.floor(width);
+                    height = Math.floor(height);
+                    originalCanvas.width = width;
+                    originalCanvas.height = height;
+                    edgeCanvas.width = width;
+                    edgeCanvas.height = height;
+                    ctxOrig.clearRect(0, 0, width, height);
+                    ctxOrig.drawImage(img, 0, 0, width, height);
+                    originalImageData = ctxOrig.getImageData(0, 0, width, height);
+                    imageLoaded = true;
+                    originalInfo.innerHTML = `📸 已加载: ${file.name} (${width}×${height})`;
+                    const th = parseInt(edgeThresholdSlider.value, 10);
+                    const lw = parseInt(lineWidthSlider.value, 10);
+                    computeAndRenderEdges(th, lw, currentBgMode);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 重置示例
+        function resetDefault() {
+            drawDefaultExample();
+            const th = parseInt(edgeThresholdSlider.value, 10);
+            const lw = parseInt(lineWidthSlider.value, 10);
+            computeAndRenderEdges(th, lw, currentBgMode);
+        }
+
+        // 事件绑定
+        uploadInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) loadImageFromFile(e.target.files[0]);
+        });
+
+        resetBtn.addEventListener('click', resetDefault);
+
+        edgeThresholdSlider.addEventListener('input', (e) => {
+            thresholdValueSpan.innerText = e.target.value;
+        });
+        lineWidthSlider.addEventListener('input', (e) => {
+            widthValueSpan.innerText = e.target.value;
+        });
+
+        applyBtn.addEventListener('click', () => {
+            if (!originalImageData) {
+                alert("没有图片，请先上传或使用默认示例");
+                return;
+            }
+            const th = parseInt(edgeThresholdSlider.value);
+            const lw = parseInt(lineWidthSlider.value);
+            computeAndRenderEdges(th, lw, currentBgMode);
+        });
+
+        downloadBtn.addEventListener('click', downloadEdge);
+        invertBtn.addEventListener('click', invertLineArt);
+
+        bgWhiteBtn.addEventListener('click', () => {
+            currentBgMode = 'white';
+            if (originalImageData) {
+                const th = parseInt(edgeThresholdSlider.value);
+                const lw = parseInt(lineWidthSlider.value);
+                computeAndRenderEdges(th, lw, currentBgMode);
+            }
+        });
+        bgBlackBtn.addEventListener('click', () => {
+            currentBgMode = 'black';
+            if (originalImageData) {
+                const th = parseInt(edgeThresholdSlider.value);
+                const lw = parseInt(lineWidthSlider.value);
+                computeAndRenderEdges(th, lw, currentBgMode);
+            }
+        });
+
+        // 拖拽上传
+        const dropZone = document.querySelector('.card');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.opacity = '0.96';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.opacity = '1';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.opacity = '1';
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.match('image.*')) loadImageFromFile(file);
+            else alert("请拖入图片文件");
+        });
+
+        // 初始化
+        drawDefaultExample();
+    })();
+</script>
+</body>
+</html>
