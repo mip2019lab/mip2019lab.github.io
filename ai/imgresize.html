@@ -358,7 +358,7 @@
     <!-- 信息条 -->
     <div class="info-strip">
       <span id="fileSizeInfo">📎 未选择图片</span>
-      <span class="badge-size">⬇️ 输出 ~500KB (JPEG)</span>
+      <span class="badge-size">⬇️ 输出 小于 500KB (JPEG)</span>
     </div>
 
     <!-- 预览 + 操作 -->
@@ -452,7 +452,7 @@
             const badge = document.createElement('div');
             badge.className = 'size-badge';
             badge.style.cssText = 'font-size:0.75rem; color:#3a5a7a; background:#e8eff8; padding:0.2rem 1rem; border-radius:30px; margin-top:0.6rem; display:inline-block;';
-            badge.textContent = `调整后 ${width} × ${height} · JPEG ~500KB`;
+            badge.textContent = `调整后 ${width} × ${height} · JPEG 小于 500KB`;
             previewImg.parentNode.appendChild(badge);
           };
           img.src = e.target.result;
