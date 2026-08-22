@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教工二支部</title>
+    <style>
+        /* 全局重置 & 字体 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'PingFang SC', 'Microsoft YaHei', Roboto, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 卡片容器 —— 模拟京东导航卡片风格 */
+        .nav-container {
+            max-width: 1200px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15), 0 8px 20px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            transition: box-shadow 0.25s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-container:hover {
+            box-shadow: 0 28px 56px -16px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 双栏核心布局 (flex 左右) */
+        .nav-row {
+            display: flex;
+            flex-wrap: wrap;      /* 移动端自动换行 */
+            min-height: 400px;
+        }
+
+        /* ===== 左侧栏目：分类链接 ===== */
+        .nav-left {
+            flex: 0 0 280px;      /* 固定宽度 280px，类似京东左侧分类 */
+            background: #fafbfc;
+            padding: 28px 16px 28px 24px;
+            border-right: 1px solid #e9ecf0;
+            transition: background 0.2s;
+        }
+
+        /* 左侧标题（装饰） */
+        .nav-left .category-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #8c9aa8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e1e6ec;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-left .category-title span {
+            background: #eef2f7;
+            padding: 2px 10px;
+            border-radius: 60px;
+            font-size: 0.7rem;
+            color: #2d4b6a;
+        }
+
+        /* 链接列表 */
+        .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .link-item {
+            display: block;
+            padding: 10px 16px 10px 14px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #1f2e44;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            border-left: 3px solid transparent;
+            background: transparent;
+            position: relative;
+        }
+
+        /* 左侧链接悬浮效果 —— 类似京东分类高亮 */
+        .link-item:hover {
+            background: #f0e0c4;
+            color: #0f2b46;
+            border-left-color: #f08f91;   /* 京东红 */
+            padding-left: 20px;
+            transform: translateX(2px);
+        }
+
+        .link-item:active {
+            transform: scale(0.97);
+        }
+
+        /* 左侧小图标点缀 (纯CSS) */
+        .link-item::before {
+            content: "›";
+            display: inline-block;
+            margin-right: 10px;
+            font-weight: 300;
+            color: #9bafc2;
+            transition: color 0.2s, transform 0.2s;
+        }
+
+        .link-item:hover::before {
+            color: #e4393c;
+            transform: translateX(2px);
+        }
+
+        /* ===== 右侧栏目：页面介绍区域 ===== */
+        .nav-right {
+            flex: 1;              /* 占满剩余宽度 */
+            padding: 28px 32px 32px 32px;
+            background: #ffffff;
+            min-width: 260px;
+        }
+
+        /* 右侧头部 (类似京东商品分类标题) */
+        .right-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #edf1f7;
+            padding-bottom: 16px;
+        }
+
+        .right-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a2b3e;
+            letter-spacing: -0.2px;
+        }
+
+        .right-header .sub-tag {
+            font-size: 0.7rem;
+            background: #eef3f9;
+            padding: 4px 14px;
+            border-radius: 60px;
+            color: #40627e;
+        }
+
+        /* 介绍内容卡片 */
+        .intro-content {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .intro-card {
+            background: #f0ece8;
+            border-radius: 20px;
+            padding: 18px 24px 22px 24px;
+            border: 1px solid #eef2f8;
+            transition: all 0.15s ease;
+        }
+
+        .intro-card:hover {
+            background: #edecf3;
+            border-color: #dbe2ec;
+            box-shadow: 0 4px 10px rgba(234, 160, 117, 0.6);
+        }
+
+        .intro-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f3855;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .intro-card h3 i {
+            font-style: normal;
+            background: #dce6f2;
+            border-radius: 40px;
+            padding: 0 10px;
+            font-size: 0.7rem;
+            color: #2f5377;
+        }
+
+        .intro-card p {
+            color: #3f5b78;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+
+        .intro-card .meta {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: #728aa3;
+            border-top: 1px dashed #dbe2ec;
+            padding-top: 12px;
+        }
+
+        .intro-card .meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 右侧底部“更多” 装饰 */
+        .right-footer {
+            margin-top: 28px;
+            text-align: right;
+            font-size: 0.8rem;
+            color: #8ca1b7;
+            border-top: 1px solid #ecf0f6;
+            padding-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .right-footer a {
+            color: #2b5f8a;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 4px 14px;
+            border-radius: 60px;
+            background: #eef4fa;
+            transition: 0.1s;
+        }
+
+        .right-footer a:hover {
+            background: #dce6f2;
+            color: #1a3d60;
+        }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 768px) {
+            .nav-left {
+                flex: 0 0 100%;
+                border-right: none;
+                border-bottom: 1px solid #e9ecf0;
+                padding: 20px 18px;
+            }
+
+            .nav-right {
+                padding: 24px 20px;
+            }
+
+            .right-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .intro-card {
+                padding: 16px 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-container {
+                border-radius: 16px;
+            }
+            .nav-left .category-title {
+                font-size: 0.7rem;
+            }
+            .right-header h2 {
+                font-size: 1.1rem;
+            }
+            .intro-card h3 {
+                font-size: 1rem;
+            }
+        }
+
+        /* 小工具：京东红点缀 */
+        .jd-red {
+            color: #e4393c;
+        }
+
+        .bg-soft-red {
+            background: #fce9e9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="nav-container">
+    <div class="nav-row">
+
+        <!-- 左侧：分类链接 (多个页面超链接) -->
+        <div class="nav-left">
+            <div class="category-title">
+                📂 全部导航
+                <span>16</span>
+            </div>
+            <div class="link-list">
+                <!-- 使用 href 直接链接到对应的页面 -->
+                <a href="https://www.gov.cn/yaowen/liebiao/202606/content_7073592.htm" class="link-item">8月份：第一议题学习内容《坚持制度治党、依规治党——深入学习贯彻习近平党建思想系列述评之十三》</a>
+                <a href="https://dkt.dtdjzx.gov.cn/#/public" class="link-item">8月份：观看灯塔大课堂《深入学习贯彻习近平党建思想》</a>
+                 <a href="bgPPT.pptx" class="link-item">教工二支部会议欢迎辞</a>           
+            </div>
+            <!-- 左侧底部装饰 -->
+            <div style="margin-top: 30px; font-size: 0.7rem; color: #b0c3d4; border-top: 1px solid #e5eaf0; padding-top: 16px; text-align: center;">
+                <span>🛒 快捷导航 · 今日推荐</span>
+            </div>
+        </div>
+
+        <!-- 右侧：页面介绍 -->
+        <div class="nav-right">
+            <!-- 右侧头部：标题显示“首页 · 精选” -->
+            <div class="right-header">
+                <h2> <img src="logodzb.png" width="40" height="30"></img> 教工二支部主题学习</h2> 
+                <span class="sub-tag">🔥 热门</span>
+            </div>
+
+            <!-- 介绍内容 -->
+            <div class="intro-content">
+                <div class="intro-card">
+                    <h3>📌 概览 <i>主题学习</i></h3>
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;计算机学院教工第二党支部始终围绕高校立德树人根本任务，以党建引领教学科研深度融合，常态化开展系列主题学习活动。支部聚焦中央八项规定精神、教育强国建设等重要内容开展线上政治理论学习，组织高校示范微党课集中研讨，推动理论学习入脑入心。系列学习坚持学用结合，有效凝聚起党员教师的奋进合力，为学科建设、科研创新与人才培养注入了坚实的红色动力。</p>
+                    <div class="meta">
+                        <span>🕒 今日更新 16+</span>
+                        <span>👥 浏览 3.2k</span>
+                        <span>⭐ 推荐</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧底部 -->
+            <div class="right-footer">
+                <span>📌 当前分类 · 内容持续更新</span>
+                <a href="sign.html" style="background:transparent; padding:0; color:#2f5f8a;">↻ 回到首页</a>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div align="center"> 
+        <footer>
+            ✅ 完全本地处理，数据不上传。
+            <br>
+            <font style="font-size:small;">版权所有©曲阜师范大学计算机学院教工二支部</font>
+        </footer>
+    </div>
+</div>
+
+</body>
+</html>
