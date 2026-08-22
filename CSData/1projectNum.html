@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2022-2025年各类有资科研项目数量趋势</title>
+    <!-- 引入 ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f5f7fa;
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            padding: 20px;
+        }
+        .chart-container {
+            width: 900px;
+            max-width: 98vw;
+            height: 560px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            padding: 20px 20px 10px 20px;
+            transition: all 0.3s ease;
+        }
+        .chart-container:hover {
+            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+        }
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+        .footer-note {
+            text-align: center;
+            color: #999;
+            font-size: 11px;
+            margin-top: 4px;
+            letter-spacing: 0.3px;
+        }
+        @media (max-width: 600px) {
+            .chart-container {
+                height: 420px;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <div id="chart"></div>
+        <div class="footer-note">数据来源于中层干部述职报告</div>
+    </div>
+
+    <script>
+        (function() {
+            const chartDom = document.getElementById('chart');
+            if (!chartDom) return;
+
+            const myChart = echarts.init(chartDom, 'light');
+
+            // ============================================================
+            // 数据
+            // ============================================================
+            const years = ['2022', '2023', '2024', '2025'];
+            const counts = [4, 14, 22, 25];  // 按年份升序排列
+
+            // ============================================================
+            // ECharts 配置
+            // ============================================================
+            const option = {
+                // 标题
+                title: {
+                    text: '2022-2025年各类有资科研项目数量趋势',
+                    left: 'center',
+                    top: 0,
+                    textStyle: {
+                        fontSize: 19,
+                        fontWeight: 700,
+                        color: '#1a2a3a'
+                    }
+                },
+
+                // 提示框
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const barData = params[0];
+                        const lineData = params[1];
+                        return `
+                            <strong>${barData.name}年</strong><br/>
+                            📊 项目数量：<span style="color:#2E86AB;font-weight:bold;">${barData.value}</span> 个
+                            ${lineData ? `<br/>📈 趋势值：${lineData.value}` : ''}
+                        `;
+                    },
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    borderColor: '#e0e0e0',
+                    borderWidth: 1,
+                    textStyle: { fontSize: 13 }
+                },
+
+                // 图例
+                legend: {
+                    data: ['项目数量', '趋势线'],
+                    top: 45,
+                    left: 'center',
+                    icon: 'roundRect',
+                    itemWidth: 20,
+                    itemHeight: 4,
+                    textStyle: { fontSize: 13 }
+                },
+
+                // 网格
+                grid: {
+                    left: '8%',
+                    right: '6%',
+                    bottom: '16%',
+                    top: '22%',
+                    containLabel: true
+                },
+
+                // X轴
+                xAxis: {
+                    type: 'category',
+                    data: years,
+                    name: '年份',
+                    nameLocation: 'center',
+                    nameGap: 35,
+                    nameTextStyle: {
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: '#333'
+                    },
+                    axisLine: { lineStyle: { color: '#ccc' } },
+                    axisTick: { alignWithLabel: true },
+                    axisLabel: {
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: '#555'
+                    },
+                    boundaryGap: true
+                },
+
+                // Y轴
+                yAxis: {
+                    type: 'value',
+                    name: '各类有资科研项目数量',
+                    nameLocation: 'center',
+                    nameGap: 50,
+                    nameTextStyle: {
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: '#333'
+                    },
+                    min: 0,
+                    max: 40,
+                    splitLine: {
+                        lineStyle: {
+                            color: '#e8e8e8',
+                            type: 'dashed'
+                        }
+                    },
+                    axisLabel: {
+                        fontSize: 12,
+                        color: '#555'
+                    },
+                    axisLine: { show: false }
+                },
+
+                // 系列
+                series: [
+                    // ---- 柱状图 ----
+                    {
+                        name: '项目数量',
+                        type: 'bar',
+                        data: counts,
+                        barWidth: '40%',
+                        itemStyle: {
+                            color: '#2E86AB',
+                            borderRadius: [4, 4, 0, 0],
+                            borderColor: '#ffffff',
+                            borderWidth: 1.2
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                return params.value;
+                            },
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: '#2E86AB',
+                            distance: 8
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                color: '#1a6b8a',
+                                shadowBlur: 8,
+                                shadowColor: 'rgba(46,134,171,0.4)'
+                            }
+                        }
+                    },
+                    // ---- 趋势线（折线） ----
+                    {
+                        name: '趋势线',
+                        type: 'line',
+                        data: counts,
+                        smooth: false,
+                        symbol: 'circle',
+                        symbolSize: 8,
+                        lineStyle: {
+                            color: '#D64933',
+                            width: 3
+                        },
+                        itemStyle: {
+                            color: '#D64933',
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        label: {
+                            show: true,
+                            position: 'bottom',
+                            formatter: function(params) {
+                                return params.value;
+                            },
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: '#D64933',
+                            distance: 8
+                        },
+                        emphasis: {
+                            focus: 'series',
+                            lineStyle: {
+                                width: 4
+                            }
+                        },
+                        // 标记点高亮
+                        markPoint: {
+                            data: [
+                                { type: 'max', name: '最大值' },
+                                { type: 'min', name: '最小值' }
+                            ],
+                            symbol: 'pin',
+                            symbolSize: 40,
+                            label: {
+                                formatter: function(params) {
+                                    return params.value;
+                                },
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: '#fff'
+                            },
+                            itemStyle: {
+                                color: '#D64933'
+                            }
+                        }
+                    }
+                ],
+
+                // 工具栏
+                toolbox: {
+                    feature: {
+                        saveAsImage: {
+                            title: '保存为图片',
+                            pixelRatio: 2,
+                            backgroundColor: '#ffffff'
+                        },
+                        dataView: {
+                            title: '查看数据',
+                            lang: ['数据视图', '关闭', '刷新']
+                        },
+                        restore: {
+                            title: '重置'
+                        }
+                    },
+                    right: 20,
+                    top: 10
+                },
+
+                // 数据缩放（便于查看细节）
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 0,
+                        end: 100,
+                        minSpan: 30
+                    }
+                ],
+
+                // 背景色
+                backgroundColor: 'transparent'
+            };
+
+            // ============================================================
+            // 渲染图表
+            // ============================================================
+            myChart.setOption(option);
+
+            // 自适应
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+
+            // 点击事件（可选）
+            myChart.on('click', function(params) {
+                if (params.componentType === 'series') {
+                    console.log(`点击了 ${params.name}年：${params.value} 个项目`);
+                }
+            });
+
+            console.log('✅ 科研项目趋势图已加载');
+            console.log('📊 数据：', years.map((y, i) => `${y}年: ${counts[i]}个`).join('，'));
+        })();
+    </script>
+</body>
+</html>
