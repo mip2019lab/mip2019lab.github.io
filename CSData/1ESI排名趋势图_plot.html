@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESI排名变化趋势 (2022-2025)</title>
+    <!-- 引入 ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f5f7fa;
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+        }
+        .chart-container {
+            width: 800px;
+            max-width: 95vw;
+            height: 500px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            padding: 20px 20px 10px 20px;
+            transition: all 0.3s ease;
+        }
+        .chart-container:hover {
+            box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+        }
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+        .footer-note {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+        }
+        @media (max-width: 600px) {
+            .chart-container {
+                height: 380px;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <div id="chart"></div>
+        <div class="footer-note">数据来源：ESI排名</div>
+    </div>
+
+    <script>
+        (function() {
+            const chartDom = document.getElementById('chart');
+            if (!chartDom) return;
+
+            const myChart = echarts.init(chartDom, 'light');
+
+            const dates = ['2022.03', '2022.11', '2024.03', '2024.11', '2025.03', '2025.11'];
+            const esiValues = [0.70, 0.56, 0.44, 0.38, 0.37, 0.33];
+
+            const option = {
+                title: {
+                    text: '曲阜师范大学计算机专业ESI排名变化趋势 (2022-2025)',
+                    left: 'center',
+                    top: 0,
+                    textStyle: {
+                        fontSize: 19,
+                        fontWeight: 600,
+                        color: '#1a2a3a'
+                    }
+                },
+
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const p = params[0];
+                        return `<strong>${p.name}</strong><br/>ESI值：<span style="color:#2E86AB;font-weight:bold;">${p.value}</span>`;
+                    },
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    borderColor: '#e0e0e0',
+                    borderWidth: 1,
+                    textStyle: { fontSize: 13 }
+                },
+
+                grid: {
+                    left: '6%',
+                    right: '6%',
+                    bottom: '14%',
+                    top: '18%',
+                    containLabel: true
+                },
+
+                xAxis: {
+                    type: 'category',
+                    data: dates,
+                    name: '年份',                    // 👈 水平轴标题
+                    nameLocation: 'center',
+                    nameGap: 35,
+                    nameTextStyle: {
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: '#333'
+                    },
+                    axisLine: { lineStyle: { color: '#ccc' } },
+                    axisTick: { alignWithLabel: true },
+                    axisLabel: {
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: '#555'
+                    },
+                    boundaryGap: false
+                },
+
+                // ========== Y轴逆序排列（0.3在上，0.7在下）==========
+                yAxis: {
+                    type: 'value',
+                    min: 0.25,
+                    max: 0.75,
+                    inverse: true,
+                    name: 'ESI千分位',                  // 👈 垂直轴标题
+                    nameLocation: 'center',
+                    nameGap: 50,
+                    nameTextStyle: {
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: '#333'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#e8e8e8',
+                            type: 'dashed'
+                        }
+                    },
+                    axisLabel: {
+                        fontSize: 12,
+                        color: '#555',
+                        formatter: function(value) {
+                            return value ; 
+                        }
+                    },
+                    axisLine: { show: false }
+                },
+
+                series: [
+                    {
+                        name: 'ESI值',
+                        type: 'line',
+                        data: esiValues,
+                        smooth: false,
+                        symbol: 'circle',
+                        symbolSize: 10,
+                        lineStyle: {
+                            color: '#2E86AB',
+                            width: 3
+                        },
+                        itemStyle: {
+                            color: '#2E86AB',
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(46,134,171,0.30)' },
+                                    { offset: 1, color: 'rgba(46,134,171,0.02)' }
+                                ]
+                            }
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                return params.value.toFixed(2);
+                            },
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: '#2E86AB',
+                            distance: 8
+                        },
+                        emphasis: {
+                            focus: 'series',
+                            lineStyle: {
+                                width: 4
+                            }
+                        }
+                    }
+                ],
+
+                legend: { show: false },
+
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 0,
+                        end: 100,
+                        minSpan: 30
+                    }
+                ],
+
+                toolbox: {
+                    feature: {
+                        saveAsImage: {
+                            title: '保存为图片',
+                            pixelRatio: 2,
+                            backgroundColor: '#ffffff'
+                        },
+                        dataView: {
+                            title: '查看数据',
+                            lang: ['数据视图', '关闭', '刷新']
+                        }
+                    },
+                    right: 20,
+                    top: 10
+                }
+            };
+
+            myChart.setOption(option);
+
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+
+            console.log('✅ ESI趋势图已加载（Y轴逆序），数据：', dates.map((d, i) => `${d}: ${esiValues[i]}`).join('，'));
+        })();
+    </script>
+</body>
+</html>
