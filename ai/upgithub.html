@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub hosts 手动修改指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f6f8fa;
+            color: #24292f;
+            padding: 30px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 40px 45px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            border-bottom: 1px solid #d0d7de;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        h1 a {
+            color: #0969da;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: 500;
+            background: #f0f6ff;
+            padding: 2px 12px;
+            border-radius: 20px;
+            word-break: break-all;
+        }
+
+        h1 a:hover {
+            text-decoration: underline;
+            background-color: #ddf4ff;
+        }
+
+        .badge {
+            background-color: #e1e4e8;
+            color: #24292f;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 0 12px;
+            border-radius: 20px;
+            line-height: 28px;
+            display: inline-block;
+        }
+
+        h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            color: #1f2328;
+        }
+
+        .step {
+            background-color: #f6f8fa;
+            border-left: 4px solid #0969da;
+            padding: 18px 22px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+
+        .step strong {
+            color: #0969da;
+            font-weight: 600;
+            display: block;
+            font-size: 17px;
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            margin-bottom: 6px;
+        }
+
+        .step ul, .step ol {
+            padding-left: 24px;
+            margin: 8px 0 4px;
+        }
+
+        .step li {
+            margin-bottom: 6px;
+        }
+
+        code {
+            background-color: #e8ecf0;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            color: #1f2328;
+        }
+
+        .highlight-box {
+            background-color: #fff8e7;
+            border: 1px solid #f5c77b;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 24px 0 8px;
+        }
+
+        .highlight-box strong {
+            color: #9a6700;
+        }
+
+        .cmd {
+            background-color: #1f2328;
+            color: #f0f6fc;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.95em;
+            overflow-x: auto;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .note {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid #d0d7de;
+            font-size: 15px;
+            color: #57606a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .note a {
+            color: #0969da;
+            text-decoration: none;
+        }
+
+        .note a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px 10px;
+            }
+            .container {
+                padding: 25px 18px;
+            }
+            h1 {
+                font-size: 22px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            h1 a {
+                font-size: 17px;
+                padding: 0 10px;
+            }
+            .step {
+                padding: 14px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span>📘 参考项目</span>
+            <a href="https://github.com/521xueweihan/GitHub520/tree/main" target="_blank" rel="noopener noreferrer">
+                github.com/521xueweihan/GitHub520/tree/main
+            </a>
+        </h1>
+
+        <h2>修改 hosts 文件（手动挡，技术向）</h2>
+        <p style="margin-bottom: 18px; font-size: 16px;">
+            这是最经典的方法，原理是绕过正常的DNS解析，手动把 <code>github.com</code> 及其相关域名的IP地址“固定”下来，让你直连一个速度快的节点。
+        </p>
+
+        <div class="step">
+            <strong>📥 操作步骤</strong>
+            <p><strong>1. 获取最新IP：</strong>打开 <a href="https://github.com/521xueweihan/GitHub520" target="_blank" rel="noopener noreferrer">GitHub520 项目页面</a>，复制它提供的、最新的 <code>hosts</code> 文件内容。</p>
+        </div>
+
+        <div class="step">
+            <strong>✏️ 修改 hosts 文件</strong>
+            <ul>
+                <li>
+                    <strong>Windows：</strong>文件在 <code>C:\Windows\System32\drivers\etc\hosts</code>。用记事本打开，把刚才复制的内容粘贴到最后，保存即可。如果提示没权限，可以先把文件拖到桌面，改完再拖回去覆盖原文件。
+                </li>
+                <li>
+                    <strong>Mac / Linux：</strong>文件在 <code>/etc/hosts</code>，用 <code>sudo</code> 权限编辑（比如 <code>sudo vim /etc/hosts</code>）。
+                </li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <strong>🔄 刷新 DNS 缓存</strong>
+            <p>让修改立刻生效：</p>
+            <ul>
+                <li><strong>Windows：</strong>在命令提示符运行 <code>ipconfig /flushdns</code></li>
+                <li><strong>Mac：</strong>运行 <code>sudo killall -HUP mDNSResponder</code></li>
+                <li><strong>Linux：</strong>可尝试 <code>sudo systemctl restart systemd-resolved</code> 或 <code>sudo service nscd restart</code></li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <strong>💡 小提示：</strong> 如果觉得手动操作麻烦，可以配合自动脚本或图形工具。但手动修改是最直接、最可控的方式。<br>
+            注意将etc文件夹“属性”设置为可读写权限
+        </div>
+
+        <div class="note">
+            <span>🔗 项目地址：</span>
+            <a href="https://github.com/521xueweihan/GitHub520" target="_blank" rel="noopener noreferrer">  GitHub520 ; </a>
+      
+          
+             <span style="margin-left: auto; font-size: 14px;">—— 持续更新 GitHub 可用 IP</span>
+        </div>
+        <div class="note">
+            <span>🔗 代码下载：</span>
+           
+           <a href="1updateHosts.py" target="_blank" rel="noopener noreferrer"> <font style="color: red;">自动更新hosts软件（tkinter）</font></a>
+      
+            
+        </div>
+    </div>
+</body>
+</html>
