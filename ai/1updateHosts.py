@@ -6,6 +6,8 @@ import sys
 import ctypes
 import subprocess
 import platform
+import webbrowser
+
 
 class GitHubHostsTool:
     def __init__(self, root):
@@ -97,6 +99,20 @@ class GitHubHostsTool:
         )
         self.refresh_btn.pack(side=tk.LEFT, padx=5)
         
+        # 新增：手动打开网页按钮
+        self.open_web_btn = tk.Button(
+            button_frame,
+            text="🌐 手动下载Hosts",
+            command=self.open_github520_web,
+            bg="#9b59b6",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            padx=20,
+            pady=8,
+            cursor="hand2"
+        )
+        self.open_web_btn.pack(side=tk.LEFT, padx=5)
+        
         # 信息显示区域（带滚动条）
         info_frame = tk.Frame(self.root)
         info_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
@@ -133,6 +149,15 @@ class GitHubHostsTool:
         
         # 加载已有的GitHub hosts
         self.load_current_hosts()
+    
+    def open_github520_web(self):
+        """在默认浏览器中打开GitHub520页面"""
+        url = "https://github.com/521xueweihan/GitHub520/tree/main"
+        try:
+            webbrowser.open(url)
+            self.status_label.config(text=f"已打开网页: {url}")
+        except Exception as e:
+            messagebox.showerror("错误", f"无法打开浏览器: {str(e)}")
     
     def load_current_hosts(self):
         """加载当前hosts文件中的GitHub相关条目"""
@@ -347,6 +372,7 @@ class GitHubHostsTool:
         except Exception as e:
             self.status_label.config(text=f"DNS刷新失败: {str(e)}")
             messagebox.showwarning("警告", f"DNS缓存刷新失败，请手动执行相关命令")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
