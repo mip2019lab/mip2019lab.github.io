@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超链接居中模块 · 浅绿底色</title>
+    <style>
+        /* 全局重置 + 基础字体 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f0f2f5;    /* 柔和的背景衬托 */
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 1rem;
+        }
+
+        /* 居中模块 —— 浅绿色底色 + 圆角卡片质感 */
+        .link-card {
+            background-color: #d4edda;   /* 柔和浅绿色，符合要求 */
+            padding: 2.5rem 3rem;
+            border-radius: 2rem;          /* 圆润边缘 */
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
+            text-align: center;           /* 内部内容居中 */
+            max-width: 700px;
+            width: 100%;
+            transition: box-shadow 0.2s ease;
+            border: 1px solid rgba(60, 130, 70, 0.15); /* 极淡的边框增加层次 */
+        }
+
+        /* 模块内超链接布局：水平排列，间距舒适 */
+        .link-card a {
+            display: inline-block;
+            margin: 0.5rem 0.8rem;
+            padding: 0.6rem 1.6rem;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #1e3c2c;               /* 深绿色文字，与浅绿背景和谐 */
+            background-color: rgba(255, 255, 255, 0.5); /* 半透明白色底衬，提升可读性 */
+            border-radius: 60px;           /* 胶囊形状，现代感 */
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(60, 130, 70, 0.2);
+        }
+
+        /* 悬停效果：提升交互反馈 */
+        .link-card a:hover {
+            background-color: #ffffff;
+            color: #0f2b1a;
+            box-shadow: 0 8px 20px rgba(40, 100, 60, 0.15);
+            transform: translateY(-2px);
+            border-color: #2c6e3b;
+        }
+
+        /* 可选的点击/激活效果 */
+        .link-card a:active {
+            transform: scale(0.97);
+            background-color: #eaf7ed;
+        }
+
+        /* 小屏适配：保持美观 */
+        @media (max-width: 480px) {
+            .link-card {
+                padding: 2rem 1.2rem;
+            }
+            .link-card a {
+                display: block;           /* 小屏堆叠，更易点击 */
+                margin: 0.6rem auto;
+                width: fit-content;
+                padding: 0.6rem 2rem;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 居中模块：浅绿色底色，包裹所有超链接 -->
+    <div class="link-card">
+        <a href="https://www.runoob.com/html/html-intro.html">HTML入门基础</a>
+        <br>
+        <a href="https://www.runoob.com/try/try.php?filename=tryhtml_headers">HTML编辑器</a>
+    </div>
+</body>
+</html>
