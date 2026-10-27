@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>遗传算法 - Hello World</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    #best {
+      font-size: 24px;
+      color: green;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>遗传算法演示：寻找 "Hello, World!"</h1>
+<button onclick="startGA()">开始运行</button>
+<pre id="log"></pre>
+<div id="best">最佳匹配：</div>
+
+<script>
+const target = "Hello, World!";
+const populationSize = 200;
+const mutationRate = 0.01;
+let generation = 0;
+
+// 生成随机字符
+function randomChar() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ,.!?";
+  return chars.charAt(Math.floor(Math.random() * chars.length));
+}
+
+// 初始化种群
+function createPopulation(size) {
+  let pop = [];
+  for (let i = 0; i < size; i++) {
+    let dna = '';
+    for (let j = 0; j < target.length; j++) {
+      dna += randomChar();
+    }
+    pop.push(dna);
+  }
+  return pop;
+}
+
+// 计算适应度
+function calcFitness(individual) {
+  let score = 0;
+  for (let i = 0; i < individual.length; i++) {
+    if (individual[i] === target[i]) score++;
+  }
+  return score / target.length;
+}
+
+// 选择：轮盘赌选择
+function selectParent(population, fitnesses) {
+  let totalFitness = fitnesses.reduce((a, b) => a + b, 0);
+  let rand = Math.random() * totalFitness;
+  let runningSum = 0;
+  for (let i = 0; i < population.length; i++) {
+    runningSum += fitnesses[i];
+    if (runningSum >= rand) {
+      return population[i];
+    }
+  }
+  return population[population.length - 1]; // 默认返回最后一个
+}
+
+// 杂交（单点交叉）
+function crossover(parentA, parentB) {
+  const mid = Math.floor(Math.random() * parentA.length);
+  return parentA.slice(0, mid) + parentB.slice(mid);
+}
+
+// 变异
+function mutate(child) {
+  let childArray = child.split('');
+  for (let i = 0; i < childArray.length; i++) {
+    if (Math.random() < mutationRate) {
+      childArray[i] = randomChar();
+    }
+  }
+  return childArray.join('');
+}
+
+// 主函数：运行遗传算法
+function startGA() {
+  let population = createPopulation(populationSize);
+  let bestMatch = "";
+  let bestFitness = 0;
+  let generation = 0;
+
+  function step() {
+    let fitnesses = population.map(ind => calcFitness(ind));
+
+    let newPopulation = [];
+    let currentBestIndex = fitnesses.indexOf(Math.max(...fitnesses));
+    bestMatch = population[currentBestIndex];
+    bestFitness = fitnesses[currentBestIndex];
+
+    document.getElementById("best").innerText = `最佳匹配：${bestMatch} (适应度: ${(bestFitness * 100).toFixed(2)}%)`;
+    
+    if (bestMatch === target) {
+      document.getElementById("log").innerText += `\n🎯 找到目标字符串！共用了 ${generation} 代。`;
+      return;
+    }
+
+    for (let i = 0; i < population.length; i++) {
+      let parentA = selectParent(population, fitnesses);
+      let parentB = selectParent(population, fitnesses);
+      let child = crossover(parentA, parentB);
+      child = mutate(child);
+      newPopulation.push(child);
+    }
+
+    population = newPopulation;
+    generation++;
+
+    // 每隔几代打印一次日志
+    if (generation % 5 === 0) {
+      document.getElementById("log").innerText = `当前代数: ${generation}\n最近最佳: ${bestMatch}`;
+    }
+
+    setTimeout(step, 500); // 控制执行速度，毫秒
+  }
+
+  step();
+}
+</script>
+
+</body>
+</html>
