@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遗传算法图像分割 · 支持打开图像</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f5f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1300px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 28px;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            color: #1e2b3c;
+            margin-top: 0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        h1 span {
+            background: #3a6ea5;
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 40px;
+            letter-spacing: 0.3px;
+        }
+
+        .subtitle {
+            color: #526c85;
+            margin-bottom: 20px;
+            border-left: 4px solid #3a6ea5;
+            padding-left: 16px;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .file-upload-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #eef2f7;
+            padding: 6px 16px 6px 20px;
+            border-radius: 40px;
+            border: 1px solid #cdd9e8;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .file-upload-wrapper:hover {
+            background: #e2e9f2;
+            border-color: #a0b8d0;
+        }
+
+        .file-upload-wrapper label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1e4a76;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .file-upload-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .ga-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+        }
+
+        .canvas-area {
+            flex: 2;
+            min-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .images-row {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .image-card {
+            background: #eef2f7;
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(0, 0, 0, 0.05);
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-card h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1e2b3c;
+            margin: 0 0 12px 0;
+            letter-spacing: 0.2px;
+        }
+
+        .image-card canvas {
+            width: 100%;
+            max-width: 240px;
+            height: auto;
+            background: #cdd9e8;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 2px solid white;
+        }
+
+        .chart-card {
+            background: #eef2f7;
+            border-radius: 24px;
+            padding: 16px 20px 12px 20px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1e2b3c;
+            margin: 0 0 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #fitnessChart {
+            width: 100%;
+            height: 140px;
+            background: #ffffffc2;
+            border-radius: 18px;
+            display: block;
+        }
+
+        .control-panel {
+            flex: 1;
+            min-width: 280px;
+            background: #eef2f7;
+            border-radius: 24px;
+            padding: 22px 24px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .param-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .param-row label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e2b3c;
+            display: flex;
+            justify-content: space-between;
+            letter-spacing: 0.3px;
+        }
+
+        .param-row label span {
+            background: #ffffffc7;
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-weight: 500;
+            color: #1e4a76;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #3a6ea5;
+            background: #cdd9e8;
+            height: 6px;
+            border-radius: 10px;
+        }
+
+        .stats-box {
+            background: #ffffffd9;
+            border-radius: 20px;
+            padding: 18px 16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            border: 1px solid #d0dfee;
+            margin-top: 6px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #526c85;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e2b3c;
+            line-height: 1.2;
+        }
+
+        .stat-value small {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #526c85;
+            margin-left: 2px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: auto;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #3a6ea5;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 12px 22px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 10px rgba(58, 110, 165, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1;
+            border: 1px solid #ffffff50;
+        }
+
+        button:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 5px rgba(58, 110, 165, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.3);
+        }
+
+        button.secondary {
+            background: #5f7f9f;
+            box-shadow: 0 4px 10px rgba(95, 127, 159, 0.25);
+        }
+
+        button.secondary:hover {
+            background: #4b6b8a;
+        }
+
+        .note {
+            font-size: 0.75rem;
+            color: #5f7f9f;
+            text-align: center;
+            margin-top: 10px;
+            border-top: 1px dashed #cdd9e8;
+            padding-top: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            🧬 遗传算法 · 图像分割
+            <span>阈值优化</span>
+        </h1>
+        <div class="subtitle">
+            <span>使用遗传算法自动搜索最佳二值化阈值，以最大化类间方差（Otsu 准则的变体）。自适应进化 + 精英保留。</span>
+            <div class="file-upload-wrapper">
+                <label for="imageUpload">
+                    📂 打开图像
+                </label>
+                <input type="file" id="imageUpload" accept="image/*">
+            </div>
+        </div>
+
+        <div class="ga-panel">
+            <!-- 左侧画布区域 -->
+            <div class="canvas-area">
+                <div class="images-row">
+                    <div class="image-card">
+                        <h3>原始图像</h3>
+                        <canvas id="originalCanvas" width="240" height="240"></canvas>
+                    </div>
+                    <div class="image-card">
+                        <h3>分割结果 <span id="thresholdDisplay">T = 128</span></h3>
+                        <canvas id="segmentedCanvas" width="240" height="240"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>
+                        <span>📈 适应度进化 (最佳个体)</span>
+                        <span id="generationLabel">第 0 代</span>
+                    </h3>
+                    <canvas id="fitnessChart" width="600" height="140"></canvas>
+                </div>
+            </div>
+
+            <!-- 右侧控制面板 -->
+            <div class="control-panel">
+                <div class="param-row">
+                    <label>
+                        种群大小 <span id="popSizeVal">20</span>
+                    </label>
+                    <input type="range" id="popSizeSlider" min="10" max="40" value="20" step="2">
+                </div>
+                <div class="param-row">
+                    <label>
+                        交叉概率 <span id="crossoverVal">0.80</span>
+                    </label>
+                    <input type="range" id="crossoverSlider" min="0.5" max="1.0" value="0.8" step="0.01">
+                </div>
+                <div class="param-row">
+                    <label>
+                        变异概率 <span id="mutationVal">0.10</span>
+                    </label>
+                    <input type="range" id="mutationSlider" min="0.01" max="0.3" value="0.1" step="0.01">
+                </div>
+
+                <div class="stats-box">
+                    <div class="stat-item">
+                        <span class="stat-label">最佳阈值</span>
+                        <span class="stat-value" id="bestThresholdStat">128</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">最佳适应度</span>
+                        <span class="stat-value" id="bestFitnessStat">0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">当前代</span>
+                        <span class="stat-value" id="currentGenStat">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">种群多样性</span>
+                        <span class="stat-value" id="diversityStat">0.0</span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="evolveBtn" class="secondary">▶ 进化一代</button>
+                    <button id="autoRunBtn">⏩ 自动运行</button>
+                </div>
+                <button id="resetBtn" style="background:#5f7f9f; margin-top:0;">⟲ 重置种群</button>
+                <div class="note">
+                    适应度 = 类间方差 (归一化) | 基因 = 灰度阈值 (0~255)
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function(){
+            // ---------- 1. 获取画布 & 上下文 ----------
+            const originalCanvas = document.getElementById('originalCanvas');
+            const segmentedCanvas = document.getElementById('segmentedCanvas');
+            const fitnessChart = document.getElementById('fitnessChart');
+            const origCtx = originalCanvas.getContext('2d');
+            const segCtx = segmentedCanvas.getContext('2d');
+            const chartCtx = fitnessChart.getContext('2d');
+            const fileInput = document.getElementById('imageUpload');
+
+            // ---------- 2. 图像数据容器 ----------
+            const width = 240, height = 240;          // 固定画布尺寸
+            let originalGray = new Uint8ClampedArray(width * height); // 当前图像灰度数据
+
+            // 直方图与累积量 (每次加载新图后重新计算)
+            let hist = new Array(256).fill(0);
+            let cumCount = new Array(256).fill(0);
+            let cumSum = new Array(256).fill(0);
+            let totalCount = width * height;
+            let totalSum = 0;
+
+            // ---------- 3. 生成初始合成图像 (双峰直方图, 方便演示) ----------
+            function generateSyntheticImage() {
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = y * width + x;
+                        let base;
+                        const normX = x / width;
+                        if (normX < 0.45) {
+                            base = 200; // 亮区
+                        } else if (normX > 0.55) {
+                            base = 55;  // 暗区
+                        } else {
+                            base = 55 + (200 - 55) * ((normX - 0.45) / 0.10);
+                        }
+                        const noise = (Math.sin(x * 0.3) * Math.cos(y * 0.2) * 18) + (Math.random() * 22 - 11);
+                        let val = base + noise;
+                        if ((x % 37 < 9 && y % 41 < 8) || (x % 53 < 6 && y % 29 < 7)) {
+                            val += 30;
+                        }
+                        val = Math.min(255, Math.max(0, val));
+                        originalGray[idx] = Math.floor(val);
+                    }
+                }
+            }
+
+            // 绘制原始图像 (灰度)
+            function drawOriginal() {
+                const imgData = origCtx.createImageData(width, height);
+                for (let i = 0; i < originalGray.length; i++) {
+                    const v = originalGray[i];
+                    imgData.data[i*4] = v;
+                    imgData.data[i*4+1] = v;
+                    imgData.data[i*4+2] = v;
+                    imgData.data[i*4+3] = 255;
+                }
+                origCtx.putImageData(imgData, 0, 0);
+            }
+
+            // ---------- 4. 直方图与适应度计算 (基于当前 originalGray) ----------
+            function computeHistogramAndCumulative() {
+                hist.fill(0);
+                for (let i = 0; i < originalGray.length; i++) {
+                    hist[originalGray[i]]++;
+                }
+                totalCount = width * height;
+                let runningCount = 0;
+                let runningSum = 0;
+                for (let i = 0; i < 256; i++) {
+                    runningCount += hist[i];
+                    runningSum += i * hist[i];
+                    cumCount[i] = runningCount;
+                    cumSum[i] = runningSum;
+                }
+                totalSum = cumSum[255];
+            }
+
+            // 计算类间方差 (Otsu 适应度)
+            function fitness(threshold) {
+                if (threshold < 0) threshold = 0;
+                if (threshold > 254) threshold = 254;
+                const w0 = cumCount[threshold];
+                const w1 = totalCount - w0;
+                if (w0 === 0 || w1 === 0) return 0;
+
+                const sum0 = cumSum[threshold];
+                const sum1 = totalSum - sum0;
+                const mean0 = sum0 / w0;
+                const mean1 = sum1 / w1;
+                const meanDiff = mean0 - mean1;
+                return w0 * w1 * meanDiff * meanDiff;
+            }
+
+            // 归一化适应度 (用于显示)
+            function normalizedFitness(threshold) {
+                const raw = fitness(threshold);
+                return Math.min(1, raw / 16256.25);
+            }
+
+            // ---------- 5. 遗传算法参数与状态 ----------
+            let populationSize = 20;
+            let crossoverProb = 0.8;
+            let mutationProb = 0.1;
+            let population = [];
+            let bestIndividual = 128;
+            let bestFitnessValue = 0;
+            let generation = 0;
+            let fitnessHistoryNorm = [];
+
+            // DOM 元素
+            const popSizeSlider = document.getElementById('popSizeSlider');
+            const popSizeVal = document.getElementById('popSizeVal');
+            const crossoverSlider = document.getElementById('crossoverSlider');
+            const crossoverVal = document.getElementById('crossoverVal');
+            const mutationSlider = document.getElementById('mutationSlider');
+            const mutationVal = document.getElementById('mutationVal');
+            const bestThresholdStat = document.getElementById('bestThresholdStat');
+            const bestFitnessStat = document.getElementById('bestFitnessStat');
+            const currentGenStat = document.getElementById('currentGenStat');
+            const diversityStat = document.getElementById('diversityStat');
+            const generationLabel = document.getElementById('generationLabel');
+            const thresholdDisplay = document.getElementById('thresholdDisplay');
+
+            // 事件监听
+            popSizeSlider.addEventListener('input', (e) => {
+                populationSize = parseInt(e.target.value);
+                popSizeVal.textContent = populationSize;
+                resetPopulation();
+            });
+            crossoverSlider.addEventListener('input', (e) => {
+                crossoverProb = parseFloat(e.target.value);
+                crossoverVal.textContent = crossoverProb.toFixed(2);
+            });
+            mutationSlider.addEventListener('input', (e) => {
+                mutationProb = parseFloat(e.target.value);
+                mutationVal.textContent = mutationProb.toFixed(2);
+            });
+
+            // ---------- 6. 核心 GA 操作 ----------
+            function tournamentSelect(pop) {
+                const k = 3;
+                let best = pop[Math.floor(Math.random() * pop.length)];
+                let bestFit = fitness(best);
+                for (let i = 1; i < k; i++) {
+                    const ind = pop[Math.floor(Math.random() * pop.length)];
+                    const fit = fitness(ind);
+                    if (fit > bestFit) {
+                        best = ind;
+                        bestFit = fit;
+                    }
+                }
+                return best;
+            }
+
+            function crossover(p1, p2) {
+                if (Math.random() < crossoverProb) {
+                    const alpha = Math.random();
+                    let child1 = Math.round(alpha * p1 + (1 - alpha) * p2);
+                    let child2 = Math.round((1 - alpha) * p1 + alpha * p2);
+                    child1 = Math.min(255, Math.max(0, child1));
+                    child2 = Math.min(255, Math.max(0, child2));
+                    return [child1, child2];
+                }
+                return [p1, p2];
+            }
+
+            function mutate(gene) {
+                if (Math.random() < mutationProb) {
+                    if (Math.random() < 0.5) {
+                        return Math.floor(Math.random() * 256);
+                    } else {
+                        const delta = Math.round((Math.random() * 2 - 1) * 30);
+                        let newVal = gene + delta;
+                        return Math.min(255, Math.max(0, newVal));
+                    }
+                }
+                return gene;
+            }
+
+            // 评估种群，更新最佳
+            function evaluatePopulation() {
+                let bestRaw = -1;
+                let bestGene = population[0];
+                for (let gene of population) {
+                    const raw = fitness(gene);
+                    if (raw > bestRaw) {
+                        bestRaw = raw;
+                        bestGene = gene;
+                    }
+                }
+                if (bestRaw > 0) {
+                    bestIndividual = bestGene;
+                    bestFitnessValue = bestRaw;
+                }
+            }
+
+            // 更新UI统计数字和分割图像
+            function updateStatsAndUI() {
+                const normFit = normalizedFitness(bestIndividual);
+                bestThresholdStat.textContent = bestIndividual;
+                bestFitnessStat.textContent = normFit.toFixed(4);
+                currentGenStat.textContent = generation;
+                generationLabel.textContent = `第 ${generation} 代`;
+                thresholdDisplay.textContent = `T = ${bestIndividual}`;
+                const diversity = calculateDiversity();
+                diversityStat.textContent = diversity.toFixed(1);
+                drawSegmentation(bestIndividual);
+            }
+
+            function calculateDiversity() {
+                if (population.length === 0) return 0;
+                const mean = population.reduce((a, b) => a + b, 0) / population.length;
+                const variance = population.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / population.length;
+                return Math.sqrt(variance);
+            }
+
+            // 绘制分割图像
+            function drawSegmentation(threshold) {
+                const imgData = segCtx.createImageData(width, height);
+                for (let i = 0; i < originalGray.length; i++) {
+                    const v = originalGray[i];
+                    const binary = (v > threshold) ? 255 : 0;
+                    imgData.data[i*4] = binary;
+                    imgData.data[i*4+1] = binary;
+                    imgData.data[i*4+2] = binary;
+                    imgData.data[i*4+3] = 255;
+                }
+                segCtx.putImageData(imgData, 0, 0);
+            }
+
+            // 绘制适应度曲线
+            function drawFitnessChart() {
+                const w = fitnessChart.width;
+                const h = fitnessChart.height;
+                chartCtx.clearRect(0, 0, w, h);
+                
+                chartCtx.strokeStyle = "#d9e2ed";
+                chartCtx.lineWidth = 1;
+                for (let i = 0; i <= 4; i++) {
+                    const y = i * h / 4;
+                    chartCtx.beginPath();
+                    chartCtx.moveTo(0, y);
+                    chartCtx.lineTo(w, y);
+                    chartCtx.stroke();
+                }
+                if (fitnessHistoryNorm.length === 0) return;
+                
+                const maxVal = 1.0;
+                const points = fitnessHistoryNorm.map((val, idx) => {
+                    const x = (idx / (fitnessHistoryNorm.length - 1 || 1)) * (w - 20) + 10;
+                    const y = h - 10 - (val / maxVal) * (h - 30);
+                    return { x, y };
+                });
+
+                chartCtx.beginPath();
+                chartCtx.strokeStyle = "#3a6ea5";
+                chartCtx.lineWidth = 3;
+                chartCtx.lineJoin = 'round';
+                chartCtx.lineCap = 'round';
+                points.forEach((p, i) => {
+                    if (i === 0) chartCtx.moveTo(p.x, p.y);
+                    else chartCtx.lineTo(p.x, p.y);
+                });
+                chartCtx.stroke();
+
+                points.forEach((p, i) => {
+                    if (i === points.length - 1 || i % Math.ceil(points.length / 15) === 0 || i === 0) {
+                        chartCtx.beginPath();
+                        chartCtx.arc(p.x, p.y, 3.5, 0, 2 * Math.PI);
+                        chartCtx.fillStyle = "#3a6ea5";
+                        chartCtx.fill();
+                        chartCtx.strokeStyle = "white";
+                        chartCtx.lineWidth = 1.5;
+                        chartCtx.stroke();
+                    }
+                });
+
+                const lastVal = fitnessHistoryNorm[fitnessHistoryNorm.length - 1] || 0;
+                chartCtx.font = "bold 11px system-ui";
+                chartCtx.fillStyle = "#1e2b3c";
+                chartCtx.fillText(`最佳: ${lastVal.toFixed(4)}`, w - 110, 20);
+            }
+
+            // 进化一代
+            function evolveOneGeneration() {
+                // 精英保留
+                let bestRaw = -1;
+                let eliteGene = population[0];
+                for (let gene of population) {
+                    const raw = fitness(gene);
+                    if (raw > bestRaw) {
+                        bestRaw = raw;
+                        eliteGene = gene;
+                    }
+                }
+                if (bestRaw > 0) {
+                    bestIndividual = eliteGene;
+                    bestFitnessValue = bestRaw;
+                }
+
+                const newPop = [eliteGene];
+                while (newPop.length < populationSize) {
+                    const p1 = tournamentSelect(population);
+                    const p2 = tournamentSelect(population);
+                    const [c1, c2] = crossover(p1, p2);
+                    const m1 = mutate(c1);
+                    const m2 = mutate(c2);
+                    newPop.push(m1);
+                    if (newPop.length < populationSize) newPop.push(m2);
+                }
+                population = newPop.slice(0, populationSize);
+                generation++;
+
+                // 更新最佳
+                let newBestRaw = -1;
+                let newBestGene = population[0];
+                for (let gene of population) {
+                    const raw = fitness(gene);
+                    if (raw > newBestRaw) {
+                        newBestRaw = raw;
+                        newBestGene = gene;
+                    }
+                }
+                if (newBestRaw > 0) {
+                    bestIndividual = newBestGene;
+                    bestFitnessValue = newBestRaw;
+                }
+                fitnessHistoryNorm.push(normalizedFitness(bestIndividual));
+                updateStatsAndUI();
+                drawFitnessChart();
+            }
+
+            // 重置种群 (基于当前图像)
+            function resetPopulation() {
+                if (autoTimer) {
+                    clearInterval(autoTimer);
+                    autoTimer = null;
+                    autoRunBtn.textContent = '⏩ 自动运行';
+                }
+                population = [];
+                for (let i = 0; i < populationSize; i++) {
+                    population.push(Math.floor(Math.random() * 256));
+                }
+                generation = 0;
+                fitnessHistoryNorm = [];
+                // 评估初始最佳
+                evaluatePopulation();
+                fitnessHistoryNorm.push(normalizedFitness(bestIndividual));
+                updateStatsAndUI();
+                drawFitnessChart();
+            }
+
+            // ---------- 7. 图像加载功能 ----------
+            function loadImageFromFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // 将图像绘制到临时画布，并缩放到 240x240 (保持比例，居中裁剪或拉伸？采用拉伸填满，简单)
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = width;
+                        tempCanvas.height = height;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        // 直接拉伸填满 (失真可接受，演示用)，也可保持比例但这里简单处理
+                        tempCtx.drawImage(img, 0, 0, width, height);
+                        const imgData = tempCtx.getImageData(0, 0, width, height);
+                        // 转换为灰度
+                        for (let i = 0; i < imgData.data.length; i += 4) {
+                            const r = imgData.data[i];
+                            const g = imgData.data[i+1];
+                            const b = imgData.data[i+2];
+                            // 灰度公式
+                            const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                            originalGray[i/4] = gray;
+                        }
+                        // 重新计算直方图
+                        computeHistogramAndCumulative();
+                        // 绘制原始图像
+                        drawOriginal();
+                        // 重置种群并更新界面
+                        resetPopulation();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    loadImageFromFile(file);
+                }
+                // 清空 input 以便再次选择相同文件
+                fileInput.value = '';
+            });
+
+            // ---------- 8. 事件绑定与自动运行 ----------
+            const evolveBtn = document.getElementById('evolveBtn');
+            const autoRunBtn = document.getElementById('autoRunBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            let autoTimer = null;
+
+            evolveBtn.addEventListener('click', () => {
+                if (autoTimer) {
+                    clearInterval(autoTimer);
+                    autoTimer = null;
+                    autoRunBtn.textContent = '⏩ 自动运行';
+                }
+                evolveOneGeneration();
+            });
+
+            autoRunBtn.addEventListener('click', () => {
+                if (autoTimer) {
+                    clearInterval(autoTimer);
+                    autoTimer = null;
+                    autoRunBtn.textContent = '⏩ 自动运行';
+                } else {
+                    autoTimer = setInterval(() => {
+                        evolveOneGeneration();
+                    }, 150);
+                    autoRunBtn.textContent = '⏸ 暂停';
+                }
+            });
+
+            resetBtn.addEventListener('click', () => {
+                if (autoTimer) {
+                    clearInterval(autoTimer);
+                    autoTimer = null;
+                    autoRunBtn.textContent = '⏩ 自动运行';
+                }
+                resetPopulation();
+            });
+
+            // ---------- 9. 初始化 ----------
+            function init() {
+                // 生成合成图像
+                generateSyntheticImage();
+                // 计算直方图
+                computeHistogramAndCumulative();
+                // 绘制原始图像
+                drawOriginal();
+                // 初始化种群
+                resetPopulation();
+            }
+
+            init();
+
+        })();
+    </script>
+</body>
+</html>
