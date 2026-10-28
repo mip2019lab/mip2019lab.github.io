@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>课程目标达成情况 - 动态交互版</title>
-    <!-- 引入 ECharts 库 -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <style>
         body {
@@ -17,7 +16,6 @@
             font-family: "Times New Roman", "SimSun", "宋体", serif; 
         }
 
-        /* 输入框控制面板样式 */
         .control-panel {
             margin-top: 20px;
             padding: 15px 30px;
@@ -48,7 +46,7 @@
             padding: 6px 8px;
             font-size: 14px;
             text-align: center;
-            border: 1px solid #ccc;
+            border: 1px solid #000;
             border-radius: 4px;
             outline: none;
             transition: border-color 0.3s;
@@ -58,7 +56,6 @@
             border-color: #4F81BD;
         }
 
-        /* 图表容器 */
         #main {
             width: 800px;
             height: 500px;
@@ -69,7 +66,6 @@
 </head>
 <body>
 
-    <!-- 动态控制面板 -->
     <div class="control-panel">
         <div class="control-item">
             <label>课程目标1</label>
@@ -89,14 +85,11 @@
         </div>
     </div>
 
-    <!-- 图表容器 -->
     <div id="main"></div>
 
     <script>
-        // 初始化 echarts 实例
         var myChart = echarts.init(document.getElementById('main'));
 
-        // 基础配置项
         var option = {
             title: {
                 text: '课程目标达成情况',
@@ -112,9 +105,13 @@
                 trigger: 'axis',
                 axisPointer: {
                     type: 'shadow'
+                },
+                formatter: function (params) {
+                    let res = 0.68;
+                   
+                    return res;
                 }
             },
-            // 图例配置
             legend: {
                 data: [
                     {
@@ -148,7 +145,7 @@
                     fontFamily: 'SimSun, serif',
                     margin: 12
                 },
-                axisLine: { lineStyle: { color: '#cccccc' } },
+                axisLine: { lineStyle: { color: '#000' } },
                 axisTick: { show: true, alignWithLabel: true }
             },
             yAxis: {
@@ -157,8 +154,8 @@
                 max: 1,
                 interval: 0.2,
                 axisLabel: { fontSize: 14 },
-                axisLine: { show: true, lineStyle: { color: '#cccccc' } },
-                splitLine: { show: true, lineStyle: { color: '#e0e0e0', type: 'solid' } }
+                axisLine: { show: true, lineStyle: { color: '#000' } },
+                splitLine: { show: true, lineStyle: { color: '#000', type: 'solid' } }
             },
             series: [
                 {
@@ -170,36 +167,75 @@
                     label: {
                         show: true,
                         position: 'top',
-                        color: '#333333',
+                        color: '#000',
                         fontSize: 14,
                         fontFamily: 'SimSun, serif',
                         distance: 5,
                         formatter: '{c}'
+                    },
+                    // ★ 使用 markLine 在每个柱子的位置标出 0.68
+                    markLine: {
+                        symbol: 'none', // 去除两端的箭头
+                        silent: true,   // 关闭鼠标交互，防止遮挡柱子的悬浮提示
+                        label: {
+                            show: true,
+                            position: 'insideStartTop', // 标签位置：在每个柱子对应的上方
+                            formatter: '0.68',
+                            color: '#C0504D', // 红色字体
+                            fontSize: 13,
+                            fontWeight: 'bold',
+                            backgroundColor: '#ffffff', // 白底
+                            padding: [2, 4],
+                            borderRadius: 2,
+                            distance: 3 // 距离红线的距离
+                        },
+                        lineStyle: {
+                            color: '#C0504D',
+                            width: 3,
+                            type: 'solid' // 实线
+                        },
+                        data: [
+                            {
+                                yAxis: 0.68 // 在 Y 轴 0.68 的位置画线
+                            }
+                        ]
                     }
                 },
+                // 因为 markLine 已经代替了红线，这里可以删除原有的 line series，或者保留它用于图例显示
+                // 为了让图例不丢失，我们保留一个看不见的 line series，或者直接把 markLine 写在 line series 里
                 {
                     name: '目标达成度期望',
                     type: 'line',
-                    data: [0.68, 0.68, 0.68, 0.68],
-                    symbol: 'none', 
-                    lineStyle: { color: '#C0504D', width: 3 },
-                    // ★ 修改：直接在红线上显示 0.68
-                    label: {
-                        show: true,
-                        position: 'insideMiddle', // 显示在线段的正中间内部
-                        color: '#333333',         // 文字颜色
-                        fontSize: 14,
-                        fontWeight: 'bold',
-                        formatter: '0.68',        // 固定文字
-                        backgroundColor: '#ffffff', // 白底覆盖红线
-                        padding: [3, 6],          // 内边距让文字周围有留白
-                        borderRadius: 4           // 圆角效果
-                    }
+                    data: [], // 清空原有数据，只用来提供图例，不画线
+                    lineStyle: { color: '#C0504D', width: 3 }
                 }
             ]
         };
 
-        // 使用配置项显示图表
+        myChart.setOption(option);
+
+        // 稍微调整一下：为了让红线贯通全图，最好把 markLine 加在折线图上，并隐藏折线本身
+        // 以下是更优化的配置
+        option.series[0].markLine = null; // 移除柱子上的 markLine
+        option.series[1] = {
+            name: '目标达成度期望',
+            type: 'line',
+            data: [0.68, 0.68, 0.68, 0.68], // 保留数据，确保横跨全图
+            symbol: 'none', // 隐藏数据点
+            lineStyle: { color: '#C0504D', width: 3 },
+            label: {
+                show: true,
+                position: 'top',  // 标签在数据点的上方
+                formatter: '0.68',
+                color: '#C0504D',
+                fontWeight: 'bold',
+                backgroundColor: '#ffffff',
+                padding: [2, 4],
+                borderRadius: 4,
+                distance: 5
+            }
+        };
+        
         myChart.setOption(option);
 
         // ==========================================
@@ -236,7 +272,6 @@
         input3.addEventListener('input', updateChart);
         input4.addEventListener('input', updateChart);
 
-        // 响应式自适应
         window.addEventListener('resize', function() {
             myChart.resize();
         });
