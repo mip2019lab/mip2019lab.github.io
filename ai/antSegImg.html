@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蚁群算法图像分割</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 25px;
+            min-width: 320px;
+            flex: 1;
+            max-width: 550px;
+        }
+        .panel h3 {
+            margin-top: 0;
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+        canvas {
+            width: 100%;
+            height: auto;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            background: #fff;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .controls {
+            margin-top: 15px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .control-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            flex: 1;
+        }
+        .control-group input[type="range"] {
+            flex: 2;
+            cursor: pointer;
+        }
+        .control-group span {
+            width: 50px;
+            text-align: right;
+            color: #2980b9;
+            font-weight: 500;
+        }
+        input[type="file"] {
+            margin: 10px 0 15px;
+            width: 100%;
+            padding: 8px;
+            border: 1px dashed #bdc3c7;
+            border-radius: 6px;
+            background: #f9fafb;
+            cursor: pointer;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(52,152,219,0.3);
+        }
+        button:hover {
+            background: #2c81ba;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(52,152,219,0.4);
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #2c3e50;
+            line-height: 1.6;
+            border-left: 4px solid #3498db;
+        }
+        .result-cell {
+            display: inline-block;
+            width: 80px;
+            height: 24px;
+            border-radius: 4px;
+            text-align: center;
+            line-height: 24px;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            margin: 3px;
+        }
+        .stage-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        .stage-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            margin: 0;
+        }
+        .stage-btn.active {
+            background: #1abc9c;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🐜 蚁群算法图像分割</h1>
+<p style="color:#7f8c8d;">基于像素灰度聚类，利用蚁群信息素正反馈实现自动分割</p>
+
+<div class="container">
+    <!-- 输入与参数面板 -->
+    <div class="panel">
+        <h3>🖼️ 输入图像与参数</h3>
+        <input type="file" id="imageUpload" accept="image/*">
+        <div style="margin-top: 8px; font-size: 13px; color: #7f8c8d;">
+            选择一个图片文件，或点击“生成示例图像”体验
+        </div>
+        <button id="sampleBtn" onclick="generateSample()">生成示例图像</button>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="antsNum">蚂蚁数量</label>
+                <input type="range" id="antsNum" min="10" max="200" value="40" step="1" oninput="updateLabel('antsNum')">
+                <span id="antsNumVal">40</span>
+            </div>
+            <div class="control-group">
+                <label for="iterations">迭代次数</label>
+                <input type="range" id="iterations" min="1" max="20" value="3" step="1" oninput="updateLabel('iterations')">
+                <span id="iterationsVal">3</span>
+            </div>
+            <div class="control-group">
+                <label for="alpha">信息素权重 α</label>
+                <input type="range" id="alpha" min="0.1" max="3" value="1.0" step="0.1" oninput="updateLabel('alpha')">
+                <span id="alphaVal">1.0</span>
+            </div>
+            <div class="control-group">
+                <label for="beta">启发因子权重 β</label>
+                <input type="range" id="beta" min="0.1" max="3" value="2.0" step="0.1" oninput="updateLabel('beta')">
+                <span id="betaVal">2.0</span>
+            </div>
+            <div class="control-group">
+                <label for="rho">信息素挥发率 ρ</label>
+                <input type="range" id="rho" min="0.01" max="0.5" value="0.1" step="0.01" oninput="updateLabel('rho')">
+                <span id="rhoVal">0.10</span>
+            </div>
+            <div class="control-group">
+                <label for="clusters">聚类数 K</label>
+                <input type="range" id="clusters" min="2" max="8" value="3" step="1" oninput="updateLabel('clusters')">
+                <span id="clustersVal">3</span>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <button id="runBtn" onclick="runACO()" disabled>▶ 运行蚁群分割</button>
+            <button id="resetBtn" onclick="resetAll()" disabled>🔄 重置</button>
+        </div>
+        
+        <div class="info" id="statusInfo">
+            ⬆️ 请上传图片或生成示例图以开始
+        </div>
+    </div>
+
+    <!-- 显示面板 -->
+    <div class="panel">
+        <h3>📊 图像与分割结果</h3>
+        <div class="stage-selector" id="stageSelector" style="display: none;">
+            <button class="stage-btn active" data-stage="original" onclick="showStage('original')">原始图</button>
+            <button class="stage-btn" data-stage="gray" onclick="showStage('gray')">灰度图</button>
+            <button class="stage-btn" data-stage="segmented" onclick="showStage('segmented')">分割结果</button>
+            <button class="stage-btn" data-stage="pheromone" onclick="showStage('pheromone')">信息素热图</button>
+        </div>
+        <canvas id="displayCanvas" width="500" height="300"></canvas>
+        <div style="margin-top: 5px; font-size: 13px; color: #7f8c8d;" id="canvasStatus">等待图像...</div>
+        
+        <h3 style="margin-top: 20px;">📈 聚类中心与信息素</h3>
+        <div id="clusterInfo" style="margin-top: 8px; min-height: 30px;">
+            尚未运行算法。
+        </div>
+        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+            <div style="background:#d5f5e3; padding: 8px; border-radius: 6px; flex:1; min-width: 120px;">
+                <div style="font-weight:600; color:#1e8449;">迭代次数</div>
+                <div id="iterDisplay" style="font-size: 18px;">-</div>
+            </div>
+            <div style="background:#fdebd0; padding: 8px; border-radius: 6px; flex:1; min-width: 120px;">
+                <div style="font-weight:600; color:#b9770e;">分割类数</div>
+                <div id="clusterDisplay" style="font-size: 18px;">-</div>
+            </div>
+            <div style="background:#eaf2f8; padding: 8px; border-radius: 6px; flex:1; min-width: 120px;">
+                <div style="font-weight:600; color:#2980b9;">时间耗时</div>
+                <div id="timeDisplay" style="font-size: 18px;">-</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== 核心数据结构 ====================
+let imgData = null;        // 原始图像数据 {width, height, pixels:[{r,g,b}]}
+let grayData = null;       // 灰度值 (0-255) 一维数组
+let segLabels = null;      // 分割后的标签 (0..K-1)
+let pheromone = null;      // 信息素矩阵 (像素数 x K) 或一维
+let clusterCenters = [];   // 聚类中心
+let displayMode = 'original'; // 当前显示模式
+let imageLoaded = false;
+let acoDone = false;
+
+const canvas = document.getElementById('displayCanvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+// ==================== 图像读取 ====================
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        const img = new Image();
+        img.onload = function() {
+            loadImageToData(img);
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+function loadImageToData(img) {
+    // 限制尺寸，避免过慢
+    const maxDim = 300;
+    let w = img.width;
+    let h = img.height;
+    const scale = Math.min(1, maxDim / Math.max(w, h));
+    w = Math.floor(w * scale);
+    h = Math.floor(h * scale);
+    
+    canvas.width = w;
+    canvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    const imageData = ctx.getImageData(0, 0, w, h);
+    
+    // 转换为像素数组和灰度
+    const pixels = [];
+    const gray = new Float32Array(w * h);
+    for (let i = 0; i < w * h; i++) {
+        const r = imageData.data[i * 4];
+        const g = imageData.data[i * 4 + 1];
+        const b = imageData.data[i * 4 + 2];
+        pixels.push({r, g, b});
+        gray[i] = 0.299 * r + 0.587 * g + 0.114 * b; // 灰度
+    }
+    
+    imgData = { width: w, height: h, pixels };
+    grayData = gray;
+    imageLoaded = true;
+    acoDone = false;
+    segLabels = null;
+    pheromone = null;
+    clusterCenters = [];
+    
+    // 重置状态
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('resetBtn').disabled = false;
+    document.getElementById('stageSelector').style.display = 'flex';
+    // 默认显示原始图
+    displayMode = 'original';
+    updateStageButtons('original');
+    drawImage();
+    setStatus('已加载图像 ' + w + '×' + h + '，点击运行算法');
+    
+    // 重置统计信息
+    document.getElementById('iterDisplay').textContent = '-';
+    document.getElementById('clusterDisplay').textContent = '-';
+    document.getElementById('timeDisplay').textContent = '-';
+    document.getElementById('clusterInfo').innerHTML = '图像已加载，等待分割。';
+}
+
+// ==================== 示例图像 ====================
+function generateSample() {
+    // 生成一个简单的两到三个区域的合成图像
+    const w = 200, h = 150;
+    canvas.width = w; canvas.height = h;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    
+    // 画几个不同灰度的矩形和圆形
+    ctx.fillStyle = '#333333'; 
+    ctx.fillRect(20, 20, 120, 80);
+    ctx.fillStyle = '#999999';
+    ctx.beginPath();
+    ctx.arc(150, 100, 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#cccccc';
+    ctx.beginPath();
+    ctx.arc(60, 110, 25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const pixels = [];
+    const gray = new Float32Array(w * h);
+    for (let i = 0; i < w * h; i++) {
+        const r = imageData.data[i * 4];
+        const g = imageData.data[i * 4 + 1];
+        const b = imageData.data[i * 4 + 2];
+        pixels.push({r, g, b});
+        gray[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+    }
+    
+    imgData = { width: w, height: h, pixels };
+    grayData = gray;
+    imageLoaded = true;
+    acoDone = false;
+    segLabels = null;
+    pheromone = null;
+    clusterCenters = [];
+    
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('resetBtn').disabled = false;
+    document.getElementById('stageSelector').style.display = 'flex';
+    displayMode = 'original';
+    updateStageButtons('original');
+    drawImage();
+    setStatus('已生成示例图像 ' + w + '×' + h + '，可运行蚁群分割');
+    
+    document.getElementById('iterDisplay').textContent = '-';
+    document.getElementById('clusterDisplay').textContent = '-';
+    document.getElementById('timeDisplay').textContent = '-';
+    document.getElementById('clusterInfo').innerHTML = '示例图像已生成，点击运行。';
+}
+
+// ==================== 绘制 ====================
+function drawImage() {
+    if (!imgData) return;
+    const w = imgData.width, h = imgData.height;
+    canvas.width = w; canvas.height = h;
+    
+    const imageBuffer = ctx.createImageData(w, h);
+    
+    if (displayMode === 'original') {
+        // 原始彩色
+        for (let i = 0; i < w * h; i++) {
+            const p = imgData.pixels[i];
+            imageBuffer.data[i * 4] = p.r;
+            imageBuffer.data[i * 4 + 1] = p.g;
+            imageBuffer.data[i * 4 + 2] = p.b;
+            imageBuffer.data[i * 4 + 3] = 255;
+        }
+    } else if (displayMode === 'gray') {
+        for (let i = 0; i < w * h; i++) {
+            const g = Math.round(grayData[i]);
+            imageBuffer.data[i * 4] = g;
+            imageBuffer.data[i * 4 + 1] = g;
+            imageBuffer.data[i * 4 + 2] = g;
+            imageBuffer.data[i * 4 + 3] = 255;
+        }
+    } else if (displayMode === 'segmented') {
+        if (!segLabels) {
+            setStatus('尚未完成分割，请先运行算法');
+            return;
+        }
+        const colors = generateClusterColors(clusterCenters.length);
+        for (let i = 0; i < w * h; i++) {
+            const cidx = segLabels[i];
+            const col = colors[cidx];
+            imageBuffer.data[i * 4] = col[0];
+            imageBuffer.data[i * 4 + 1] = col[1];
+            imageBuffer.data[i * 4 + 2] = col[2];
+            imageBuffer.data[i * 4 + 3] = 255;
+        }
+    } else if (displayMode === 'pheromone') {
+        if (!pheromone) {
+            setStatus('尚无信息素数据，请先运行算法');
+            return;
+        }
+        // 将每个像素的最大信息素值映射为红色强度，形成热图
+        for (let i = 0; i < w * h; i++) {
+            let maxTau = 0;
+            for (let k = 0; k < clusterCenters.length; k++) {
+                if (pheromone[i * clusterCenters.length + k] > maxTau) {
+                    maxTau = pheromone[i * clusterCenters.length + k];
+                }
+            }
+            // 归一化到 0-255
+            const val = Math.min(255, Math.floor(maxTau * 255 * 5));
+            imageBuffer.data[i * 4] = val;        // R
+            imageBuffer.data[i * 4 + 1] = 0;      // G
+            imageBuffer.data[i * 4 + 2] = 0;      // B
+            imageBuffer.data[i * 4 + 3] = 255;
+        }
+    }
+    
+    ctx.putImageData(imageBuffer, 0, 0);
+    document.getElementById('canvasStatus').textContent = 
+        `显示模式: ${modeName(displayMode)} | 尺寸: ${w}×${h}`;
+}
+
+function modeName(mode) {
+    const map = {
+        'original': '原始图像',
+        'gray': '灰度图',
+        'segmented': '分割结果',
+        'pheromone': '信息素热图'
+    };
+    return map[mode] || mode;
+}
+
+function generateClusterColors(numClusters) {
+    // 生成显著不同的颜色
+    const palette = [
+        [255, 0, 0], [0, 0, 255], [0, 255, 0], 
+        [255, 165, 0], [128, 0, 128], [0, 128, 128],
+        [255, 255, 0], [255, 0, 255]
+    ];
+    const colors = [];
+    for (let i = 0; i < numClusters; i++) {
+        if (i < palette.length) {
+            colors.push(palette[i]);
+        } else {
+            colors.push([Math.random()*255, Math.random()*255, Math.random()*255]);
+        }
+    }
+    return colors;
+}
+
+// ==================== 显示模式切换 ====================
+function showStage(mode) {
+    if (!imageLoaded) return;
+    displayMode = mode;
+    updateStageButtons(mode);
+    drawImage();
+}
+
+function updateStageButtons(activeMode) {
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+        if (btn.dataset.stage === activeMode) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// ==================== 蚁群算法核心 ====================
+function runACO() {
+    if (!imageLoaded) {
+        setStatus('请先加载图像');
+        return;
+    }
+    
+    const N = imgData.width * imgData.height;
+    const K = parseInt(document.getElementById('clusters').value);
+    const numAnts = parseInt(document.getElementById('antsNum').value);
+    const maxIter = parseInt(document.getElementById('iterations').value);
+    const alpha = parseFloat(document.getElementById('alpha').value);
+    const beta = parseFloat(document.getElementById('beta').value);
+    const rho = parseFloat(document.getElementById('rho').value);
+    
+    const startTime = performance.now();
+    
+    // 初始化聚类中心（K-means++ 初始化，使用灰度作为特征）
+    clusterCenters = initCenters(grayData, N, K);
+    
+    // 初始化信息素矩阵 tau（N x K）
+    pheromone = new Float32Array(N * K);
+    const initialTau = 0.1;
+    for (let i = 0; i < N * K; i++) pheromone[i] = initialTau;
+    
+    // 用于保存最佳分割结果
+    let bestLabels = null;
+    let bestCost = Infinity;
+    
+    // 蚂蚁路径记录（每只蚂蚁对每个像素选择簇标签）
+    // 为了简化，每只蚂蚁独立为整个图像分配标签，但使用信息素和灰度相似度
+    
+    // 迭代
+    for (let iter = 0; iter < maxIter; iter++) {
+        // 每只蚂蚁负责构建一个完整的分割方案
+        const antLabelsMatrix = [];
+        const antCosts = [];
+        
+        for (let ant = 0; ant < numAnts; ant++) {
+            const labels = new Uint8Array(N);
+            // 为每个像素选择标签
+            for (let i = 0; i < N; i++) {
+                // 计算每个簇的选中概率
+                const prob = new Float64Array(K);
+                let sumProb = 0;
+                for (let k = 0; k < K; k++) {
+                    // 灰度距离作为启发式（越小越好 -> 启发值越大）
+                    const diff = Math.abs(grayData[i] - clusterCenters[k]);
+                    const eta = 1.0 / (1.0 + diff); // 距离越近，eta越大
+                    const tau = pheromone[i * K + k];
+                    const p = Math.pow(tau, alpha) * Math.pow(eta, beta);
+                    prob[k] = p;
+                    sumProb += p;
+                }
+                // 轮盘赌选择
+                let r = Math.random() * sumProb;
+                let selected = 0;
+                for (let k = 0; k < K; k++) {
+                    r -= prob[k];
+                    if (r <= 0) {
+                        selected = k;
+                        break;
+                    }
+                    if (k === K - 1) selected = K - 1;
+                }
+                labels[i] = selected;
+            }
+            
+            // 计算这个方案的代价（类内方差和）
+            const cost = computeCost(labels, grayData, clusterCenters, N, K);
+            antLabelsMatrix.push(labels);
+            antCosts.push(cost);
+            
+            // 更新当前最佳
+            if (cost < bestCost) {
+                bestCost = cost;
+                bestLabels = labels.slice();
+            }
+        }
+        
+        // 信息素更新：挥发 + 精英蚂蚁增强
+        // 挥发
+        for (let i = 0; i < N * K; i++) {
+            pheromone[i] *= (1 - rho);
+        }
+        
+        // 选择最优蚂蚁增强（最多选前3只）
+        const sortedIndices = antCosts.map((c, idx) => ({c, idx})).sort((a, b) => a.c - b.c);
+        const numElite = Math.min(3, numAnts);
+        for (let e = 0; e < numElite; e++) {
+            const antIdx = sortedIndices[e].idx;
+            const labels = antLabelsMatrix[antIdx];
+            const cost = antCosts[antIdx];
+            // 增强的强度与代价成反比
+            const increase = 1.0 / (cost + 1e-6) * 0.1;
+            for (let i = 0; i < N; i++) {
+                const k = labels[i];
+                pheromone[i * K + k] += increase;
+            }
+        }
+        
+        // 可选：更新聚类中心（基于当前最佳分割）
+        // 使用当前 bestLabels 重新计算中心
+        const newCenters = recomputeCenters(bestLabels, grayData, N, K);
+        clusterCenters = newCenters;
+        
+        // 更新进度状态
+        setStatus(`迭代 ${iter + 1}/${maxIter} 完成，当前最优代价: ${bestCost.toFixed(4)}`);
+    }
+    
+    // 最终分割
+    if (bestLabels) {
+        segLabels = bestLabels;
+        // 使用最终中心
+        clusterCenters = recomputeCenters(bestLabels, grayData, N, K);
+        acoDone = true;
+        
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+        document.getElementById('iterDisplay').textContent = maxIter;
+        document.getElementById('clusterDisplay').textContent = K;
+        document.getElementById('timeDisplay').textContent = elapsed + ' s';
+        
+        // 显示聚类信息
+        displayClusterInfo();
+        
+        // 自动切换到分割结果显示
+        displayMode = 'segmented';
+        updateStageButtons('segmented');
+        drawImage();
+        
+        setStatus(`蚁群分割完成，耗时 ${elapsed}s，自适应中心已更新。`);
+    } else {
+        setStatus('分割失败，请重试或调整参数');
+    }
+}
+
+// --- 辅助函数 ---
+function initCenters(gray, N, K) {
+    // 简单散点初始化：在灰度范围均匀选取
+    const minG = Math.min(...gray);
+    const maxG = Math.max(...gray);
+    const centers = [];
+    if (K === 1) {
+        centers.push((minG + maxG) / 2);
+        return centers;
+    }
+    for (let k = 0; k < K; k++) {
+        centers.push(minG + (maxG - minG) * k / (K - 1));
+    }
+    return centers;
+}
+
+function computeCost(labels, gray, centers, N, K) {
+    // 计算类内方差总和（或距离平方和）
+    let total = 0;
+    for (let i = 0; i < N; i++) {
+        const k = labels[i];
+        const diff = gray[i] - centers[k];
+        total += diff * diff;
+    }
+    return total / N;
+}
+
+function recomputeCenters(labels, gray, N, K) {
+    const sums = new Array(K).fill(0);
+    const counts = new Array(K).fill(0);
+    for (let i = 0; i < N; i++) {
+        const k = labels[i];
+        sums[k] += gray[i];
+        counts[k]++;
+    }
+    const newCenters = [];
+    for (let k = 0; k < K; k++) {
+        if (counts[k] > 0) {
+            newCenters[k] = sums[k] / counts[k];
+        } else {
+            // 如果某个簇没有像素，随机初始化一个
+            newCenters[k] = Math.random() * 255;
+        }
+    }
+    return newCenters;
+}
+
+function displayClusterInfo() {
+    const container = document.getElementById('clusterInfo');
+    let html = `<div style="margin-bottom:6px; font-weight:600;">聚类中心 (灰度值):</div>`;
+    const colors = generateClusterColors(clusterCenters.length);
+    clusterCenters.forEach((c, idx) => {
+        const r = Math.round(c * 1); // 将灰度映射为颜色显示
+        const bgColor = `rgb(${colors[idx][0]},${colors[idx][1]},${colors[idx][2]})`;
+        html += `<div style="display:inline-flex; align-items:center; margin:3px; padding:3px 8px; background:#f0f0f0; border-radius:4px; border-left: 4px solid ${bgColor};">
+            <span>簇 ${idx}: ${c.toFixed(1)} </span>
+        </div>`;
+    });
+    html += `<div style="margin-top:8px; font-size:13px; color:#555;">每种颜色的宽度代表该簇包含的像素数量比例</div>`;
+    container.innerHTML = html;
+}
+
+// ==================== 工具函数 ====================
+function updateLabel(id) {
+    const val = document.getElementById(id).value;
+    document.getElementById(id + 'Val').textContent = (id === 'alpha' || id === 'beta' || id === 'rho') ? parseFloat(val).toFixed(2) : val;
+}
+
+function setStatus(msg) {
+    document.getElementById('statusInfo').innerHTML = msg;
+}
+
+function resetAll() {
+    if (!imageLoaded) return;
+    acoDone = false;
+    segLabels = null;
+    pheromone = null;
+    clusterCenters = [];
+    document.getElementById('iterDisplay').textContent = '-';
+    document.getElementById('clusterDisplay').textContent = '-';
+    document.getElementById('timeDisplay').textContent = '-';
+    document.getElementById('clusterInfo').innerHTML = '尚未运行算法。';
+    displayMode = 'original';
+    updateStageButtons('original');
+    drawImage();
+    setStatus('已重置分割结果，可调整参数后重新运行');
+}
+
+// 初始禁用按钮
+document.getElementById('runBtn').disabled = true;
+document.getElementById('resetBtn').disabled = true;
+
+// 参数实时更新标签
+['antsNum', 'iterations', 'alpha', 'beta', 'rho', 'clusters'].forEach(id => {
+    updateLabel(id);
+});
+</script>
+
+</body>
+</html>
