@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>蚁群算法 - 旅行商问题可视化</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #1a1d23;
+      color: #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    h1 {
+      margin-bottom: 8px;
+      font-weight: 400;
+      color: #ffd166;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      color: #8899aa;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+    .controls button, .controls label {
+      background: #2c3038;
+      border: none;
+      color: #ddd;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .controls button:hover { background: #3a3f4a; }
+    .controls input {
+      width: 70px;
+      padding: 5px;
+      background: #1f2229;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #fff;
+      text-align: center;
+    }
+    #status {
+      color: #ffb703;
+      font-size: 15px;
+      margin-bottom: 12px;
+      min-height: 22px;
+    }
+    canvas {
+      background: #22252b;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      display: block;
+      max-width: 1000px;
+      width: 100%;
+    }
+    .stats {
+      margin-top: 16px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+      color: #ccc;
+      font-size: 15px;
+    }
+    .stats span b { color: #ffd166; }
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #99aabb;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-color { width: 14px; height: 14px; border-radius: 50%; }
+    @media (max-width: 600px) {
+      .controls { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🐜 蚁群算法 · TSP 优化过程</h1>
+  <div class="subtitle">信息素引导蚂蚁探索最短环路</div>
+
+  <div class="controls">
+    <button id="btnRand">🎲 随机城市</button>
+    <button id="btnStart">▶️ 开始迭代</button>
+    <button id="btnPause">⏸️ 暂停</button>
+    <button id="btnReset">🔄 重置信息素</button>
+    <label>蚂蚁数 <input type="number" id="antCount" value="50" min="5" max="200" step="1"></label>
+    <label>迭代间隔(ms) <input type="number" id="speed" value="50" min="10" max="500" step="10"></label>
+  </div>
+  <div id="status">就绪</div>
+  <canvas id="canvas" width="900" height="550"></canvas>
+  <div class="stats">
+    <span>当前最优长度：<b id="bestLen">—</b></span>
+    <span>迭代次数：<b id="iter">0</b></span>
+    <span>已选最优路径：<b id="bestPath">—</b></span>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-color" style="background:#ffd166;"></span>城市</div>
+    <div class="legend-item"><span class="legend-color" style="background:#4cc9f0;"></span>最优路径</div>
+    <div class="legend-item"><span class="legend-color" style="background:#ef476f;"></span>蚂蚁路径(低透明度)</div>
+  </div>
+
+  <script>
+    // ========== 蚁群算法配置 ==========
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 参数
+    let ALPHA = 1.0;        // 信息素重要程度
+    let BETA = 5.0;         // 距离启发重要程度
+    let RHO = 0.1;          // 信息素蒸发率
+    let Q = 1.0;            // 信息素强度常数
+
+    // 数据
+    let cities = [];        // 城市坐标 {x, y}
+    let dist = [];          // 距离矩阵
+    let pheromone = [];     // 信息素矩阵
+    let n = 0;             // 城市数量
+    let bestPath = [];      // 当前最优路径（城市索引数组）
+    let bestLength = Infinity;
+    let iteration = 0;
+    let running = false;
+    let timer = null;
+
+    // UI 元素
+    const statusEl = document.getElementById('status');
+    const bestLenEl = document.getElementById('bestLen');
+    const iterEl = document.getElementById('iter');
+    const bestPathEl = document.getElementById('bestPath');
+    const btnStart = document.getElementById('btnStart');
+    const btnPause = document.getElementById('btnPause');
+    const btnReset = document.getElementById('btnReset');
+    const btnRand = document.getElementById('btnRand');
+    const antCountInput = document.getElementById('antCount');
+    const speedInput = document.getElementById('speed');
+
+    // ========== 工具函数 ==========
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    // 生成随机城市
+    function generateCities(count = 25) {
+      cities = [];
+      for (let i = 0; i < count; i++) {
+        cities.push({
+          x: Math.floor(rand(40, canvas.width - 40)),
+          y: Math.floor(rand(40, canvas.height - 40))
+        });
+      }
+      n = count;
+      computeDistance();
+      initPheromone();
+      // 清空最优记录
+      bestPath = [];
+      bestLength = Infinity;
+      iteration = 0;
+      bestLenEl.textContent = '—';
+      iterEl.textContent = '0';
+      bestPathEl.textContent = '—';
+    }
+
+    // 计算距离矩阵（欧氏距离）
+    function computeDistance() {
+      dist = Array.from({ length: n }, () => new Array(n));
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          const dx = cities[i].x - cities[j].x;
+          const dy = cities[i].y - cities[j].y;
+          dist[i][j] = Math.sqrt(dx * dx + dy * dy);
+        }
+      }
+    }
+
+    // 初始化信息素矩阵
+    function initPheromone() {
+      pheromone = Array.from({ length: n }, () => new Array(n).fill(1.0));
+    }
+
+    // ========== 蚁群算法核心 ==========
+    function runAntColony() {
+      const m = parseInt(antCountInput.value) || 50;  // 蚂蚁数量
+      // 每次迭代每条蚂蚁构建路径
+      const antPaths = [];
+      const antLengths = [];
+
+      for (let k = 0; k < m; k++) {
+        // 随机起始城市
+        const start = Math.floor(Math.random() * n);
+        const visited = new Set([start]);
+        const path = [start];
+        let current = start;
+        let totalLen = 0;
+
+        for (let step = 1; step < n; step++) {
+          // 计算选择概率
+          const candidates = [];
+          let sum = 0;
+          for (let j = 0; j < n; j++) {
+            if (!visited.has(j)) {
+              const phero = Math.pow(pheromone[current][j], ALPHA);
+              const invDist = Math.pow(1 / dist[current][j], BETA);
+              const prob = phero * invDist;
+              candidates.push({ city: j, prob });
+              sum += prob;
+            }
+          }
+          // 轮盘赌选择
+          let r = Math.random() * sum;
+          let chosen = candidates[0].city;
+          for (const c of candidates) {
+            r -= c.prob;
+            if (r <= 0) {
+              chosen = c.city;
+              break;
+            }
+          }
+          path.push(chosen);
+          visited.add(chosen);
+          totalLen += dist[current][chosen];
+          current = chosen;
+        }
+        // 回到起点
+        totalLen += dist[current][start];
+        antPaths.push({ path, len: totalLen });
+      }
+
+      // 更新信息素（蒸发 + 释放）
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          pheromone[i][j] *= (1 - RHO);
+        }
+      }
+      // 根据每只蚂蚁路径释放信息素
+      for (const ant of antPaths) {
+        const delta = Q / ant.len;
+        for (let i = 0; i < n - 1; i++) {
+          const a = ant.path[i];
+          const b = ant.path[i + 1];
+          pheromone[a][b] += delta;
+          pheromone[b][a] += delta;
+        }
+        // 回到起点边
+        const a = ant.path[n - 1];
+        const b = ant.path[0];
+        pheromone[a][b] += delta;
+        pheromone[b][a] += delta;
+      }
+
+      // 记录最优路径（所有蚂蚁和当前最优）
+      let iterBest = null;
+      let iterBestLen = Infinity;
+      for (const ant of antPaths) {
+        if (ant.len < iterBestLen) {
+          iterBestLen = ant.len;
+          iterBest = ant.path.slice();
+        }
+      }
+
+      // 更新全局最优（也做2-opt局部优化）
+      if (iterBestLen < bestLength) {
+        bestLength = iterBestLen;
+        bestPath = iterBest.slice();
+        // 简单2-opt优化当前最优（可选，提升质量）
+        bestPath = twoOpt(bestPath);
+        bestLength = pathLength(bestPath);
+        bestLenEl.textContent = bestLength.toFixed(1);
+        bestPathEl.textContent = bestPath.join('→');
+      }
+
+      iteration++;
+      iterEl.textContent = iteration;
+      statusEl.textContent = `第 ${iteration} 次迭代 | 本次最优 ${iterBestLen.toFixed(1)}`;
+
+      draw(antPaths);
+    }
+
+    // 计算路径总长度
+    function pathLength(path) {
+      let len = 0;
+      for (let i = 0; i < path.length - 1; i++) {
+        len += dist[path[i]][path[i + 1]];
+      }
+      len += dist[path[path.length - 1]][path[0]];
+      return len;
+    }
+
+    // 2-opt 优化（轻量版，只做一遍）
+    function twoOpt(path) {
+      let improved = true;
+      let p = path.slice();
+      let best = pathLength(p);
+      let iterations = 0;
+      while (improved && iterations < 20) {
+        improved = false;
+        iterations++;
+        for (let i = 1; i < p.length - 1; i++) {
+          for (let j = i + 1; j < p.length; j++) {
+            // 交换 i 和 j 之间的顺序
+            const newPath = p.slice(0, i).concat(p.slice(i, j + 1).reverse(), p.slice(j + 1));
+            const newLen = pathLength(newPath);
+            if (newLen < best) {
+              p = newPath;
+              best = newLen;
+              improved = true;
+            }
+          }
+        }
+      }
+      return p;
+    }
+
+    // ========== 绘制 ==========
+    function draw(antPaths) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 绘制城市间信息素浓度（背景连线）
+      ctx.lineWidth = 1;
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const intensity = pheromone[i][j] / 5.0; // 归一化
+          if (intensity > 0.05) {
+            ctx.strokeStyle = `rgba(255, 209, 102, ${Math.min(intensity, 0.6)})`;
+            ctx.beginPath();
+            ctx.moveTo(cities[i].x, cities[i].y);
+            ctx.lineTo(cities[j].x, cities[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // 绘制蚂蚁路径（半透明红色线）
+      if (antPaths) {
+        ctx.strokeStyle = 'rgba(239, 71, 111, 0.15)';
+        ctx.lineWidth = 1;
+        for (const ant of antPaths) {
+          ctx.beginPath();
+          const path = ant.path;
+          ctx.moveTo(cities[path[0]].x, cities[path[0]].y);
+          for (let i = 1; i < path.length; i++) {
+            ctx.lineTo(cities[path[i]].x, cities[path[i]].y);
+          }
+          ctx.lineTo(cities[path[0]].x, cities[path[0]].y);
+          ctx.stroke();
+        }
+      }
+
+      // 绘制最优路径（蓝色粗线）
+      if (bestPath && bestPath.length > 0) {
+        ctx.strokeStyle = '#4cc9f0';
+        ctx.lineWidth = 2.5;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#4cc9f0';
+        ctx.beginPath();
+        ctx.moveTo(cities[bestPath[0]].x, cities[bestPath[0]].y);
+        for (let i = 1; i < bestPath.length; i++) {
+          ctx.lineTo(cities[bestPath[i]].x, cities[bestPath[i]].y);
+        }
+        ctx.lineTo(cities[bestPath[0]].x, cities[bestPath[0]].y);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // 绘制城市
+      for (let i = 0; i < n; i++) {
+        const c = cities[i];
+        ctx.fillStyle = '#ffd166';
+        ctx.strokeStyle = '#22252b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // 城市编号（小字）
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px Arial';
+        ctx.fillText(i, c.x + 8, c.y - 8);
+      }
+    }
+
+    // ========== 控制函数 ==========
+    function startLoop() {
+      if (running) return;
+      if (n === 0) {
+        generateCities(25);
+      }
+      running = true;
+      statusEl.textContent = '运行中...';
+      const delay = parseInt(speedInput.value) || 50;
+      timer = setInterval(() => {
+        if (!running) return;
+        runAntColony();
+      }, delay);
+    }
+
+    function pauseLoop() {
+      running = false;
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+      statusEl.textContent = '已暂停';
+    }
+
+    function resetPheromone() {
+      if (n > 0) {
+        initPheromone();
+        bestPath = [];
+        bestLength = Infinity;
+        iteration = 0;
+        bestLenEl.textContent = '—';
+        iterEl.textContent = '0';
+        bestPathEl.textContent = '—';
+        draw(null);
+        statusEl.textContent = '信息素已重置';
+      }
+    }
+
+    // ========== 事件绑定 ==========
+    btnStart.addEventListener('click', startLoop);
+    btnPause.addEventListener('click', pauseLoop);
+    btnReset.addEventListener('click', resetPheromone);
+    btnRand.addEventListener('click', () => {
+      pauseLoop();
+      const cnt = Math.floor(Math.random() * 10 + 18); // 18-28个城市
+      generateCities(cnt);
+      draw(null);
+      statusEl.textContent = `已生成 ${cnt} 个随机城市`;
+    });
+
+    // 初始生成
+    generateCities(25);
+    draw(null);
+  </script>
+</body>
+</html>
