@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>SKDJ 金叉策略回测分析</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --line:#334155;
+    --txt:#e2e8f0; --sub:#94a3b8; --acc:#38bdf8; --ok:#4ade80; --warn:#facc15; --err:#f87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Segoe UI","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--txt);
+    display:flex;height:100vh;overflow:hidden;
+  }
+  #sidebar{
+    width:340px;flex-shrink:0;background:var(--panel);
+    padding:18px;overflow-y:auto;border-right:1px solid var(--line);
+  }
+  h1{font-size:16px;margin-bottom:6px;color:var(--acc)}
+  .sub{font-size:12px;color:var(--sub);margin-bottom:16px;line-height:1.6}
+  .ctrl{margin-bottom:14px}
+  .ctrl label{display:flex;justify-content:space-between;
+    font-size:13px;color:var(--sub);margin-bottom:6px}
+  .ctrl label b{color:var(--acc);font-weight:600}
+  input[type=number],input[type=range],select{
+    width:100%;padding:7px;border-radius:6px;border:1px solid var(--line);
+    background:#0b1220;color:var(--txt);font-size:13px;
+  }
+  input[type=range]{padding:0;accent-color:var(--acc)}
+  #drop{
+    border:2px dashed var(--line);border-radius:10px;
+    padding:24px 12px;text-align:center;cursor:pointer;
+    transition:.2s;margin-bottom:14px;
+  }
+  #drop:hover,#drop.drag{border-color:var(--acc);background:#38bdf811}
+  #drop .icon{font-size:28px;margin-bottom:6px}
+  #drop .hint{font-size:12px;color:var(--sub)}
+  #drop .fname{font-size:13px;color:var(--acc);margin-top:6px;word-break:break-all}
+  button{
+    width:100%;padding:9px;border-radius:6px;border:none;
+    background:var(--acc);color:#062033;font-weight:700;
+    font-size:13px;cursor:pointer;margin-top:6px;
+  }
+  button:hover{filter:brightness(1.1)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.ghost{background:#334155;color:var(--txt)}
+  #result{
+    margin-top:16px;padding:12px;background:#0b1220;
+    border-radius:8px;font-size:13px;line-height:2;
+    border-left:3px solid var(--acc);display:none;
+  }
+  #result.show{display:block}
+  #result .row{display:flex;justify-content:space-between}
+  #result .row span:last-child{color:var(--acc);font-weight:700;font-family:monospace}
+  #result .verdict{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);text-align:center;font-weight:700}
+  .pass{color:var(--ok)} .fail{color:var(--err)}
+  #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  #toolbar{
+    padding:10px 20px;border-bottom:1px solid var(--line);
+    display:flex;gap:16px;align-items:center;font-size:12px;color:var(--sub);
+  }
+  #toolbar b{color:var(--acc)}
+  #chartWrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  canvas{background:#0b1220;border-radius:10px}
+  #empty{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--sub);font-size:14px;flex-direction:column;gap:8px;
+  }
+  #trades{
+    max-height:180px;overflow-y:auto;border-top:1px solid var(--line);
+  }
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{position:sticky;top:0;background:#0b1220;padding:6px;color:var(--sub);text-align:left}
+  td{padding:5px 8px;border-top:1px solid #1e293b;font-family:monospace}
+  .p-win{color:var(--ok)} .p-loss{color:var(--err)}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h1>SKDJ 金叉策略分析</h1>
+  <div class="sub">
+    上传含 <code>date, open, close, SKDJK, SKDJD</code> 列的 CSV，<br>
+    检测金叉买入信号并统计盈利表现。
+  </div>
+
+  <div id="drop">
+    <div class="icon">📄</div>
+    <div class="hint">点击或拖拽 CSV 到此处</div>
+    <div class="fname" id="fname"></div>
+    <input type="file" id="file" accept=".csv" hidden>
+  </div>
+
+  <div class="ctrl">
+    <label>回看窗口（起点前 N 行）</label>
+    <input type="number" id="startDays" value="530" min="10">
+  </div>
+  <div class="ctrl">
+    <label>买入后观察窗口 <b id="fwdVal">9</b></label>
+    <input type="range" id="fwd" min="2" max="30" step="1" value="9">
+  </div>
+  <div class="ctrl">
+    <label>信号后跳过天数 <b id="skipVal">5</b></label>
+    <input type="range" id="skip" min="0" max="20" step="1" value="5">
+  </div>
+  <div class="ctrl">
+    <label>SKDJK 阈值上限 <b id="thrVal">60</b></label>
+    <input type="range" id="thr" min="20" max="100" step="1" value="60">
+  </div>
+  <div class="ctrl">
+    <label>盈利比例阈值 <b id="ratioVal">0.69</b></label>
+    <input type="range" id="ratio" min="0.3" max="1" step="0.01" value="0.69">
+  </div>
+
+  <button id="run" disabled>开始分析</button>
+  <button class="ghost" id="demo" style="margin-top:8px">加载示例数据</button>
+
+  <div id="result"></div>
+</div>
+
+<div id="main">
+  <div id="toolbar">
+    <span>文件：<b id="tFile">—</b></span>
+    <span>行数：<b id="tRows">—</b></span>
+    <span>信号数：<b id="tSignals">—</b></span>
+    <span>盈利笔数：<b id="tWins">—</b></span>
+  </div>
+  <div id="chartWrap">
+    <canvas id="cv" width="900" height="520"></canvas>
+    <div id="empty">
+      <div style="font-size:36px">📈</div>
+      <div>上传 CSV 后点击「开始分析」</div>
+    </div>
+  </div>
+  <div id="trades">
+    <table>
+      <thead>
+        <tr><th>日期</th><th>买入价</th><th>未来最高</th><th>收益</th><th>结果</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+/* ================== 全局状态 ================== */
+let rawData = null;       // 解析后的数据数组
+let fileName = '';
+let lastResult = null;
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+/* ================== CSV 解析（支持引号与换行） ================== */
+function parseCSV(text){
+  // 统一换行
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const rows = [];
+  let row = [], field = '', inQuote = false;
+
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuote){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else inQuote = false;
+      } else field += c;
+    } else {
+      if(c === '"') inQuote = true;
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else field += c;
+    }
+  }
+  if(field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.length > 1 || r[0] !== '');
+}
+
+/* ================== 数据规范化 ================== */
+function normalize(rawRows){
+  if(rawRows.length < 2) throw new Error('CSV 内容为空');
+  const header = rawRows[0].map(h => h.trim());
+  const need = ['date','open','close','SKDJK','SKDJD'];
+  const idx = {};
+  for(const col of need){
+    const i = header.findIndex(h => h.toLowerCase() === col.toLowerCase());
+    if(i === -1) throw new Error(`缺少列：${col}`);
+    idx[col] = i;
+  }
+
+  const data = [];
+  for(let r=1;r<rawRows.length;r++){
+    const row = rawRows[r];
+    if(row.length <= Math.max(...Object.values(idx))) continue;
+    const dateStr = row[idx.date].trim();
+    const d = new Date(dateStr);
+    if(isNaN(d)) continue;
+    const open = parseFloat(row[idx.open]);
+    const close = parseFloat(row[idx.close]);
+    const k = parseFloat(row[idx.SKDJK]);
+    const dd = parseFloat(row[idx.SKDJD]);
+    if([open,close,k,dd].some(v => isNaN(v))) continue;
+    data.push({date: d, open, close, k, d: dd, dateStr});
+  }
+  data.sort((a,b) => a.date - b.date);
+  return data;
+}
+
+/* ================== 策略核心 ================== */
+function analyze(data, params){
+  const {startDays, fwd, skipDays, thr} = params;
+  const n = data.length;
+  if(n < 30) throw new Error('数据不足 30 行');
+
+  const start = Math.max(n - startDays, 0);
+  const end = n - fwd - 1;
+  if(end <= start) throw new Error('可用区间为空，请减少观察窗口或增加数据');
+
+  const trades = [];
+  let skip = 0;
+
+  for(let di = start; di <= end; di++){
+    if(skip > 0){ skip--; continue; }
+    const cur = data[di], twoAgo = data[di-2];
+    if(!twoAgo) continue;
+    // 金叉：当前 K>D 且两日前 K<=D，且 K<thr
+    if(cur.k > cur.d && twoAgo.k <= twoAgo.d && cur.k < thr){
+      skip = skipDays;
+      const buyPrice = (cur.close + cur.open) / 2;
+      let futureMax = -Infinity;
+      for(let j=di+1; j<=di+fwd && j<n; j++){
+        futureMax = Math.max(futureMax, data[j].close, data[j].open);
+      }
+      const profit = futureMax - buyPrice;
+      trades.push({
+        idx: di,
+        date: cur.date,
+        dateStr: cur.dateStr,
+        buyPrice,
+        futureMax,
+        profit,
+        win: profit > 0
+      });
+    }
+  }
+
+  const signals = trades.length;
+  const wins = trades.filter(t => t.win).length;
+  const sumProfit = trades.reduce((s,t) => s + t.profit, 0);
+  const winRate = signals ? wins / signals : 0;
+  const lastClose = data[n-1].close;
+
+  return {
+    trades, signals, wins, sumProfit, winRate,
+    lastClose,
+    avgProfit: signals ? sumProfit / signals : 0,
+    avgProfitRatio: lastClose ? (signals ? sumProfit/1/lastClose : 0) : 0,
+    data
+  };
+}
+
+/* ================== 绘制 ================== */
+function draw(res, params){
+  const {data, trades} = res;
+  const n = data.length;
+  const W = cv.width, H = cv.height;
+  const PAD_L = 56, PAD_R = 16, PAD_T = 20, PAD_B = 36;
+  const cw = W - PAD_L - PAD_R;
+  const ch = H - PAD_T - PAD_B;
+
+  ctx.clearRect(0,0,W,H);
+
+  // 价格范围
+  let pMin = Infinity, pMax = -Infinity;
+  for(const d of data){
+    pMin = Math.min(pMin, d.open, d.close);
+    pMax = Math.max(pMax, d.open, d.close);
+  }
+  const pPad = (pMax - pMin) * 0.08 || 1;
+  pMin -= pPad; pMax += pPad;
+
+  const sx = i => PAD_L + (n===1 ? cw/2 : i/(n-1)*cw);
+  const sy = v => PAD_T + (1 - (v - pMin)/(pMax - pMin)) * ch;
+
+  // 背景网格
+  ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+  ctx.fillStyle = '#94a3b8'; ctx.font = '11px monospace';
+  ctx.textAlign = 'right';
+  for(let i=0;i<=5;i++){
+    const yv = pMin + (pMax-pMin)*i/5;
+    const py = sy(yv);
+    ctx.beginPath(); ctx.moveTo(PAD_L, py); ctx.lineTo(W-PAD_R, py); ctx.stroke();
+    ctx.fillText(yv.toFixed(2), PAD_L-6, py+4);
+  }
+
+  // 收盘价曲线
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.6; ctx.beginPath();
+  data.forEach((d,i) => {
+    const px = sx(i), py = sy(d.close);
+    i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  });
+  ctx.stroke();
+
+  // 买入信号点
+  for(const t of trades){
+    const px = sx(t.idx), py = sy(t.buyPrice);
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI*2);
+    ctx.fillStyle = t.win ? '#4ade80' : '#f87171';
+    ctx.fill();
+    ctx.strokeStyle = '#0b1220'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // 未来最高价连线（浅色）
+    let maxIdx = t.idx;
+    let maxVal = t.buyPrice;
+    for(let j=t.idx+1; j<=t.idx+params.fwd && j<n; j++){
+      const v = Math.max(data[j].close, data[j].open);
+      if(v > maxVal){ maxVal = v; maxIdx = j; }
+    }
+    ctx.strokeStyle = t.win ? 'rgba(74,222,128,0.35)' : 'rgba(248,113,113,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(sx(maxIdx), sy(maxVal));
+    ctx.stroke();
+  }
+
+  // 图例
+  ctx.textAlign = 'left'; ctx.font = '12px sans-serif';
+  const legend = [
+    ['#38bdf8','收盘价'],
+    ['#4ade80','盈利信号'],
+    ['#f87171','亏损信号']
+  ];
+  legend.forEach(([c,t],i) => {
+    const y = PAD_T + 14 + i*18;
+    ctx.fillStyle = c;
+    ctx.beginPath(); ctx.arc(PAD_L+8, y-4, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillText(t, PAD_L+20, y);
+  });
+}
+
+/* ================== 结果展示 ================== */
+function showResult(res, params){
+  const box = document.getElementById('result');
+  box.classList.add('show');
+  const pass = res.winRate > params.ratio;
+  box.innerHTML = `
+    <div class="row"><span>信号总数</span><span>${res.signals}</span></div>
+    <div class="row"><span>盈利笔数</span><span>${res.wins}</span></div>
+    <div class="row"><span>胜率</span><span>${(res.winRate*100).toFixed(2)}%</span></div>
+    <div class="row"><span>累计收益</span><span>${res.sumProfit.toFixed(3)}</span></div>
+    <div class="row"><span>平均每笔收益</span><span>${res.avgProfit.toFixed(3)}</span></div>
+    <div class="row"><span>末价</span><span>${res.lastClose.toFixed(3)}</span></div>
+    <div class="row" style="color:red"><span>总的收益比</span><span  style="color:orange">${res.avgProfitRatio.toFixed(4)}</span></div>
+    <div class="verdict ${pass?'pass':'fail'}">
+      ${pass ? '✓ 胜率超过阈值，符合筛选条件' : '✗ 胜率未达阈值'}
+    </div>
+  `;
+
+  // 交易明细
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  res.trades.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${t.dateStr}</td>
+      <td>${t.buyPrice.toFixed(2)}</td>
+      <td>${t.futureMax.toFixed(2)}</td>
+      <td class="${t.win?'p-win':'p-loss'}">${t.profit.toFixed(3)}</td>
+      <td class="${t.win?'p-win':'p-loss'}">${t.win?'盈':'亏'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // 工具栏
+  document.getElementById('tFile').textContent = fileName;
+  document.getElementById('tRows').textContent = res.data.length;
+  document.getElementById('tSignals').textContent = res.signals;
+  document.getElementById('tWins').textContent = res.wins;
+  document.getElementById('empty').style.display = 'none';
+}
+
+/* ================== 主流程 ================== */
+function run(){
+  if(!rawData){ return; }
+  const params = {
+    startDays: +document.getElementById('startDays').value || 230,
+    fwd:       +document.getElementById('fwd').value,
+    skipDays:  +document.getElementById('skip').value,
+    thr:       +document.getElementById('thr').value,
+    ratio:     +document.getElementById('ratio').value
+  };
+  try {
+    const res = analyze(rawData, params);
+    lastResult = {res, params};
+    draw(res, params);
+    showResult(res, params);
+  } catch(e){
+    alert('分析失败：' + e.message);
+  }
+}
+
+/* ================== 文件读取 ================== */
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+
+function loadFile(file){
+  if(!file){ return; }
+  fileName = file.name;
+  document.getElementById('fname').textContent = fileName;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      rawData = normalize(rows);
+      document.getElementById('run').disabled = false;
+      document.getElementById('tRows').textContent = rawData.length;
+      document.getElementById('empty').style.display = 'flex';
+      document.getElementById('empty').innerHTML = '<div style="font-size:36px">✅</div><div>数据已加载，点击「开始分析」</div>';
+      document.getElementById('result').classList.remove('show');
+      document.getElementById('tbody').innerHTML = '';
+    } catch(err){
+      alert('解析失败：' + err.message);
+      rawData = null;
+      document.getElementById('run').disabled = true;
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f && f.name.toLowerCase().endsWith('.csv')) loadFile(f);
+  else alert('请拖入 CSV 文件');
+});
+fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+
+document.getElementById('run').addEventListener('click', run);
+['fwd','skip','thr','ratio'].forEach(id => {
+  const el = document.getElementById(id);
+  const lab = document.getElementById(id+'Val');
+  el.addEventListener('input', () => {
+    lab.textContent = id === 'ratio' ? (+el.value).toFixed(2) : el.value;
+  });
+  el.addEventListener('change', () => { if(rawData && document.getElementById('result').classList.contains('show')) run(); });
+});
+document.getElementById('startDays').addEventListener('change', () => {
+  if(rawData && document.getElementById('result').classList.contains('show')) run();
+});
+
+/* ================== 示例数据 ================== */
+document.getElementById('demo').addEventListener('click', () => {
+  // 生成 300 天模拟数据：带趋势 + 噪声，SKDJ 用随机游走模拟
+  const rows = ['date,open,close,SKDJK,SKDJD'];
+  const start = new Date('2023-01-01');
+  let price = 50, k = 40, d = 45;
+  for(let i=0;i<300;i++){
+    const dt = new Date(start.getTime() + i*86400000);
+    const ds = dt.toISOString().slice(0,10);
+    const open = price;
+    const drift = Math.sin(i/20) * 0.8 + (Math.random()-0.5)*1.2;
+    price = Math.max(5, price + drift);
+    const close = price;
+    k = Math.max(5, Math.min(95, k + (Math.random()-0.48)*8));
+    d = k*0.7 + d*0.3 + (Math.random()-0.5)*2;
+    rows.push(`${ds},${open.toFixed(2)},${close.toFixed(2)},${k.toFixed(2)},${d.toFixed(2)}`);
+  }
+  const text = rows.join('\n');
+  fileName = 'demo_data.csv';
+  document.getElementById('fname').textContent = fileName;
+  rawData = normalize(parseCSV(text));
+  document.getElementById('run').disabled = false;
+  document.getElementById('tRows').textContent = rawData.length;
+  document.getElementById('empty').innerHTML = '<div style="font-size:36px">✅</div><div>示例数据已加载，点击「开始分析」</div>';
+  run();
+});
+</script>
+</body>
+</html>
