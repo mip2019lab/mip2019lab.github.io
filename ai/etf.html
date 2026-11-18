@@ -353,7 +353,7 @@ function showResult(res, params){
   box.innerHTML = `
     <div class="row"><span>信号总数</span><span>${res.signals}</span></div>
     <div class="row"><span>盈利笔数</span><span>${res.wins}</span></div>
-    <div class="row"><span>胜率</span><span>${(res.winRate*100).toFixed(2)}%</span></div>
+    <div class="row"><span style="color:red;font-size: 1.5em">胜率</span><span>${(res.winRate*100).toFixed(2)}%</span></div>
     <div class="row"><span>累计收益</span><span>${res.sumProfit.toFixed(3)}</span></div>
     <div class="row"><span>平均每笔收益</span><span>${res.avgProfit.toFixed(3)}</span></div>
     <div class="row"><span>末价</span><span>${res.lastClose.toFixed(3)}</span></div>
