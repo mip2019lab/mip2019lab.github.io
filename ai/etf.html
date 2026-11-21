@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -30,13 +31,13 @@
   }
   input[type=range]{padding:0;accent-color:var(--acc)}
   #drop{
-    border:2px dashed var(--line);border-radius:10px;
+    border:2px dashed var(--line);border-radius:6px;
     padding:24px 12px;text-align:center;cursor:pointer;
-    transition:.2s;margin-bottom:14px;
+    transition:.2s;margin-bottom:14px;height: 88px;
   }
   #drop:hover,#drop.drag{border-color:var(--acc);background:#38bdf811}
   #drop .icon{font-size:28px;margin-bottom:6px}
-  #drop .hint{font-size:12px;color:var(--sub)}
+  #drop .hint{font-size:12px;color:var(--sub);height: 1px;background-color: rgb(242, 16, 137);}
   #drop .fname{font-size:13px;color:var(--acc);margin-top:6px;word-break:break-all}
   button{
     width:100%;padding:9px;border-radius:6px;border:none;
@@ -80,7 +81,7 @@
 <body>
 
 <div id="sidebar">
-  <h1>SKDJ 金叉策略分析</h1>
+  <h6>SKDJ 金叉策略分析</h6>
   <div class="sub">
     上传含 <code>date, open, close, SKDJK, SKDJD</code> 列的 CSV，<br>
     检测金叉买入信号并统计盈利表现。
@@ -117,7 +118,7 @@
   </div>
 
   <button id="run" disabled>开始分析</button>
-  <button class="ghost" id="demo" style="margin-top:8px">加载示例数据</button>
+ <!-- <button class="ghost" id="demo" style="margin-top:8px">加载示例数据</button>-->
 
   <div id="result"></div>
 </div>
