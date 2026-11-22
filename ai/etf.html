@@ -112,10 +112,10 @@
     <label>SKDJK 阈值上限[10,60] <b id="thrVal">20</b></label>
     <input type="range" id="thr" min="10" max="60" step="5" value="20">
   </div>
-  <div class="ctrl">
+ <!--   <div class="ctrl">
     <label>盈利比例阈值 <b id="ratioVal">0.8</b></label>
     <input type="range" id="ratio" min="0.3" max="1" step="0.01" value="0.69">
-  </div>
+  </div>   -->
 
   <button id="run" disabled>开始分析</button>
  <!-- <button class="ghost" id="demo" style="margin-top:8px">加载示例数据</button>-->
@@ -350,7 +350,7 @@ function draw(res, params){
 function showResult(res, params){
   const box = document.getElementById('result');
   box.classList.add('show');
-  const pass = res.winRate > params.ratio;
+  const pass = res.winRate > 0.9;  <!-- params.ratio; -->
   box.innerHTML = `
     <div class="row"><span>信号总数</span><span>${res.signals}</span></div>
     <div class="row"><span>盈利笔数</span><span>${res.wins}</span></div>
