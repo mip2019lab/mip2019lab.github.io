@@ -395,7 +395,7 @@ function run(){
     fwd:       +document.getElementById('fwd').value,
     skipDays:  +document.getElementById('skip').value,
     thr:       +document.getElementById('thr').value,
-    ratio:     +document.getElementById('ratio').value
+    ratio:     + 0.9  <!--  document.getElementById('ratio').value  -->
   };
   try {
     const res = analyze(rawData, params);
