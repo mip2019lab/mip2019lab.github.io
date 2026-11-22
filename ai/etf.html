@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -104,21 +103,14 @@
     <label>买入后观察窗口[3,16] <b id="fwdVal">16</b></label>
     <input type="range" id="fwd" min="2" max="30" step="1" value="16">
   </div>
-  <div class="ctrl">
-    <label>信号后跳过天数 <b id="skipVal">5</b></label>
-    <input type="range" id="skip" min="0" max="20" step="1" value="5">
-  </div>
+  <!-- 信号后跳过天数 控件已移除 -->
   <div class="ctrl">
     <label>SKDJK 阈值上限[10,60] <b id="thrVal">20</b></label>
     <input type="range" id="thr" min="10" max="60" step="5" value="20">
   </div>
- <!--   <div class="ctrl">
-    <label>盈利比例阈值 <b id="ratioVal">0.8</b></label>
-    <input type="range" id="ratio" min="0.3" max="1" step="0.01" value="0.69">
-  </div>   -->
 
   <button id="run" disabled>开始分析</button>
- <!-- <button class="ghost" id="demo" style="margin-top:8px">加载示例数据</button>-->
+  <!-- <button class="ghost" id="demo" style="margin-top:8px">加载示例数据</button>-->
 
   <div id="result"></div>
 </div>
@@ -230,7 +222,7 @@ function analyze(data, params){
     if(!twoAgo) continue;
     // 金叉：当前 K>D 且两日前 K<=D，且 K<thr
     if(cur.k > cur.d && twoAgo.k <= twoAgo.d && cur.k < thr){
-      skip = skipDays;
+      skip = skipDays;   // 固定为 0，因为 skipDays 传入 0 或者这里可保留逻辑但不再从界面读取
       const buyPrice = (cur.close + cur.open) / 2;
       let futureMax = -Infinity;
       for(let j=di+3; j<=di+fwd && j<n; j++){
@@ -350,7 +342,7 @@ function draw(res, params){
 function showResult(res, params){
   const box = document.getElementById('result');
   box.classList.add('show');
-  const pass = res.winRate > 0.9;  <!-- params.ratio; -->
+  const pass = res.winRate > 0.9;
   box.innerHTML = `
     <div class="row"><span>信号总数</span><span>${res.signals}</span></div>
     <div class="row"><span>盈利笔数</span><span>${res.wins}</span></div>
@@ -393,9 +385,8 @@ function run(){
   const params = {
     startDays: +document.getElementById('startDays').value || 230,
     fwd:       +document.getElementById('fwd').value,
-    skipDays:  +document.getElementById('skip').value,
+    skipDays:  0,          // 信号后跳过天数固定为 0（控件已移除）
     thr:       +document.getElementById('thr').value,
-    ratio:     + 0.9  <!--  document.getElementById('ratio').value  -->
   };
   try {
     const res = analyze(rawData, params);
@@ -447,20 +438,25 @@ drop.addEventListener('drop', e => {
 fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
 
 document.getElementById('run').addEventListener('click', run);
-['fwd','skip','thr','ratio'].forEach(id => {
+
+// 只绑定 fwd 和 thr 的滑条事件（skip 和 ratio 已移除）
+['fwd','thr'].forEach(id => {
   const el = document.getElementById(id);
   const lab = document.getElementById(id+'Val');
-  el.addEventListener('input', () => {
-    lab.textContent = id === 'ratio' ? (+el.value).toFixed(2) : el.value;
-  });
-  el.addEventListener('change', () => { if(rawData && document.getElementById('result').classList.contains('show')) run(); });
+  if(el && lab){
+    el.addEventListener('input', () => {
+      lab.textContent = el.value;
+    });
+    el.addEventListener('change', () => { if(rawData && document.getElementById('result').classList.contains('show')) run(); });
+  }
 });
 document.getElementById('startDays').addEventListener('change', () => {
   if(rawData && document.getElementById('result').classList.contains('show')) run();
 });
 
-/* ================== 示例数据 ================== */
-document.getElementById('demo').addEventListener('click', () => {
+/* ================== 示例数据（已注释） ================== */
+/*
+document.getElementById('demo')?.addEventListener('click', () => {
   // 生成 300 天模拟数据：带趋势 + 噪声，SKDJ 用随机游走模拟
   const rows = ['date,open,close,SKDJK,SKDJD'];
   const start = new Date('2023-01-01');
@@ -485,6 +481,7 @@ document.getElementById('demo').addEventListener('click', () => {
   document.getElementById('empty').innerHTML = '<div style="font-size:36px">✅</div><div>示例数据已加载，点击「开始分析」</div>';
   run();
 });
+*/
 </script>
 </body>
 </html>
