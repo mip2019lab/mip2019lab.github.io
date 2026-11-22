@@ -97,16 +97,16 @@
 
   <div class="ctrl">
     <label>回看窗口（起点前 N 行）</label>
-    <input type="number" id="startDays" value="230" min="10">
+    <input type="number" id="startDays" value="1230" min="10">
   </div>
   <div class="ctrl">
-    <label>买入后观察窗口[3,16] <b id="fwdVal">16</b></label>
-    <input type="range" id="fwd" min="2" max="30" step="1" value="16">
+    <label>买入后观察窗口[3,60] <b id="fwdVal">30</b></label>
+    <input type="range" id="fwd" min="2" max="60" step="1" value="30">
   </div>
   <!-- 信号后跳过天数 控件已移除 -->
   <div class="ctrl">
-    <label>SKDJK 阈值上限[10,60] <b id="thrVal">20</b></label>
-    <input type="range" id="thr" min="10" max="60" step="5" value="20">
+    <label>SKDJK 阈值上限[20,60] <b id="thrVal">50</b></label>
+    <input type="range" id="thr" min="20" max="60" step="5" value="50">
   </div>
 
   <button id="run" disabled>开始分析</button>
